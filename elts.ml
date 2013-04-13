@@ -6,7 +6,7 @@ sig
 
   val one: t
 
-  val compare : t -> t -> order
+  val compare : t -> t -> Order.order
 
 
   (* Converts a t to a string *)
@@ -43,4 +43,10 @@ end
 module Floats : ORDERED_AND_OPERATIONAL 
 struct
   type t = float
+
+  let zero = 0.
+
+  let one = 1.
+
+  let compare = 
 end
