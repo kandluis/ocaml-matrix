@@ -30,40 +30,37 @@ sig
    * built-in Arrays *)
 
   (* empty matrix *)
-  val empty
+  val empty : int -> matrix
 
   (* Takes a list of lists and converts that to a matrix *)
-
   val from_list : (elt list list) -> matrix
 
   (* Will implement using nested match statements *)
 
   (* Scales every element in the matrix by another elt *)
-
   val scale : matrix -> elt -> matrix
 
   (* Will implement by iterating through the matrix and scaling each element *)
 
   (* Adds two matrices. They must have the same dimensions *)
-
   val add : matrix -> matrix -> matrix
 
   (* Will add the elements elementwise and construct a new matrix *)
 
   (* Multiplies two matrices. If the matrices have dimensions m x n and p x q, n
    * and p must be equal, and the resulting matrix will have dimension m x q *)
-
   val mult: matrix -> matrix -> matrix
 
   (* Will take the dot product of the nth row of the first matrix and the jth
    * column of the second matrix to create the n,j th entry of the resultant *)
 
   (* Returns the row reduced form of a matrix *)
-
   val row_reduce: matrix -> matrix
-
   (* We will implement the algorithm found in the link above *)
 
+(* This part will not be used since it is not essential to the simplex
+ * algorithm. We will implement it if we have time. *)
+(*
   (* Returns the inverse of a matrix *)
 
   val inverse: matrix -> matrix
@@ -110,10 +107,48 @@ sig
 
   (* We will have some way to express matrices using strings, and then we will
    * parse the string to give the matrix *)
+*)
 
   (* Prints out the contents of a matrix *)
-
-  val print :matrix -> unit
+  val print : matrix -> unit
 
   (* Iterate through the matrix and print each element *)
 end
+
+module Matrix (C: ORDERED_AND_OPERATIONAL) : MATRIX with type elt = C.t =
+sig
+  exception NonSquare
+  type elt = C.t
+  type matrix = (elt array) array 
+
+  (* Type of this is unknown, but will probably be represented using Ocaml's
+   * built-in Arrays *)
+
+  let empty (n: int) : matrix = Array.make_matrix n n C.zero
+
+  let scale (m: matrix) (sc: elt) : matrix = 
+
+
+  (* Will implement by iterating through the matrix and scaling each element *)
+
+  (* Adds two matrices. They must have the same dimensions *)
+
+  val add : matrix -> matrix -> matrix
+
+  (* Will add the elements elementwise and construct a new matrix *)
+
+  (* Multiplies two matrices. If the matrices have dimensions m x n and p x q, n
+   * and p must be equal, and the resulting matrix will have dimension m x q *)
+
+  val mult: matrix -> matrix -> matrix
+
+  (* Will take the dot product of the nth row of the first matrix and the jth
+   * column of the second matrix to create the n,j th entry of the resultant *)
+
+  (* Returns the row reduced form of a matrix *)
+
+  val row_reduce: matrix -> matrix
+
+  (* We will implement the algorithm found in the link above *)
+
+

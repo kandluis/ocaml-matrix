@@ -9,7 +9,5 @@ sig
 
 	val constraint_from_string : string -> constraint
 	
-	val linear_from_string : string -> constraint
-
 end
 
