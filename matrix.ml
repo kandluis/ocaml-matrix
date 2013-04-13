@@ -78,12 +78,12 @@ sig
 	* yields eigenvalues. Repeat for all basis vectors *)
 	
 	(* Takes a string and builds a matrix from it *)
-	from_string : string -> matrix
+	val from_string : string -> matrix
 	(* We will have some way to express matrices using strings, and then we will
 	* parse the string to give the matrix *)
 	
 	(* Prints out the contents of a matrix *)
-	print :matrix -> unit
+	val print :matrix -> unit
 	(* Iterate through the matrix and print each element *)
 
 end

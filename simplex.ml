@@ -1,4 +1,4 @@
-module type simplex
+module type SIMPLEX
 sig
 
 	type elt
@@ -6,7 +6,9 @@ sig
 	type constraint
 
 	val pivot : matrix -> matrix
+
 	val constraint_from_string : string -> constraint
-	val linear_from_string : string -> constraint
 	
+	val linear_from_string : string -> constraint
+
 end
