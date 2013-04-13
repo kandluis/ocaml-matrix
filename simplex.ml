@@ -1,9 +1,9 @@
 module type SIMPLEX
 sig
 
-	type elt
-	type linear_equation
-	type constraint
+  type elt
+  type linear_equation
+  type constraint
 
 	val pivot : matrix -> matrix
 
@@ -12,3 +12,4 @@ sig
 	val linear_from_string : string -> constraint
 
 end
+
