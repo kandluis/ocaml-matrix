@@ -39,3 +39,8 @@ sig
 	val generate_between: t -> t -> unit -> t option
 
 end
+
+module Floats : ORDERED_AND_OPERATIONAL 
+struct
+  type t = float
+end
