@@ -1,9 +1,9 @@
-all: moogle
+all: simplex
 
 # These must be in the right order--no forward refs
 FILES = Order.ml Elts.ml Matrix.ml Simplex.ml
 
-moogle: $(FILES)
+simplex: $(FILES)
 	ocamlc -g -o simplex $(FILES)
 
 clean: 
