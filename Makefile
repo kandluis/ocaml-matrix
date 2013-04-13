@@ -1,10 +1,10 @@
 all: moogle
 
 # These must be in the right order--no forward refs
-FILES = elts.ml matrix.ml simplex.ml
+FILES = Order.ml Elts.ml Matrix.ml Simplex.ml
 
 moogle: $(FILES)
-	ocamlc -g -o moogle $(FILES)
+	ocamlc -g -o simplex $(FILES)
 
 clean: 
 	rm -f simplex *.cmi *.cmo
