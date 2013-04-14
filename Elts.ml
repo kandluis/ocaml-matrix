@@ -1,4 +1,6 @@
-module type ORDERED_AND_OPERATIONAL
+open Order
+
+module type ORDERED_AND_OPERATIONAL =
 sig
   type t
 
@@ -40,7 +42,7 @@ sig
 
 end
 
-module Floats : ORDERED_AND_OPERATIONAL 
+module Floats : ORDERED_AND_OPERATIONAL =
 struct
   type t = float
   
@@ -66,15 +68,15 @@ struct
 
   let divide a b = a /. b 
 
-  let print a = Printf.printf (to_string a) 
+  let print a = print_string (string_of_float a) 
 
   let generate () = 3. 
 
-  let generate_gt a () = a +. 1
+  let generate_gt a () = a +. 1.
 
-  let generate_lt a () = a -. 1 
+  let generate_lt a () = a -. 1. 
 
-  let generate_between a b () = if a > b then None else Some((a +. b)/. 2)
+  let generate_between a b () = if a > b then None else Some((a +. b)/. 2.)
 
 
   
