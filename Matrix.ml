@@ -1,24 +1,6 @@
+open Elts
 
-(* PROJECT: OCaml Matrix/Min_Mathematica 
- *
- * NAMES:
- *
- * Partner 1's name: Andy Shi
- * Partner 1's github username: shiandy
- *
- * Partner 2's name: Ding Zhou
- * Partner 2's github username: dzhou94
- *
- * Partner 3's name: Jason Wang
- * Partner 3's github username: jasonwang99
- *
- * Partner 4's name: Luis Perez
- * Partner 4's github username: kandluis
- * 
- * Github Organization name: Fantastic-four
- *
- * Github Project URL: github.com/Fantastic-four/ocaml-matrix
- *)
+exception TODO
 
 module type MATRIX =
 sig
@@ -34,7 +16,7 @@ sig
    * built-in Arrays *)
 
   (* empty matrix *)
-  val empty : int -> matrix
+  val empty : int -> int -> matrix
 
   (* Takes a list of lists and converts that to a matrix *)
   val from_list : (elt list list) -> matrix
@@ -120,7 +102,7 @@ sig
 end
 
 module Matrix (C: ORDERED_AND_OPERATIONAL) : (MATRIX with type elt = C.t) =
-sig
+struct
 
   exception NonSquare
   exception ImproperDimensions
@@ -134,41 +116,65 @@ sig
   (* Type of this is unknown, but will probably be represented using Ocaml's
    * built-in Arrays *)
 
-  (* catching negative dimensions AND 0 dimensions *))
+  (* catching negative dimensions AND 0 dimensions *)
   let empty (rows: int) (columns: int) : matrix = 
-    if dimx > 0 && dimy > 0 then
+    if rows > 0 && columns > 0 then
       try
         let m = Array.make_matrix rows columns C.zero in ((rows,columns),m)
-      with Invalid_argument
+      with Invalid_argument "index out of bounds" ->
         raise ImproperDimensions
     else (* dimension is negative or 0 *)
-      raise ImproperDomensions
+      raise ImproperDimensions
 
   (** Helper Functions Section **)
 
   (* get's the nth row of a matrix and returns (r, row) where r is the length
    * of the row and row is a COPY of the original row *)
   let get_row (((n,p),m): matrix) (row: int) =
-    if row > 1 && row < n then (* all is well *)
+    if row > 1 && row <= n then (* all is well *)
       (* make a new array to enfore immutability *)
       let row' = Array.make p C.zero in
       for i = 0 to p - 1 do
-        row'.(i) <- m.(row).(i)
+        row'.(i) <- m.(row - 1).(i)
       done ;
       (p, row')
     else 
-      raise (Failure "Improper Row")
+      raise (Failure "Row out of bounds.")
+
+  let get_columt (((n,p),m): matrix) (column: int) =
+    if column > 1 && column <= p then (* all is well *)
+      let column' = Array.make n C.zero in
+      for i = 0 to n - 1 do
+        column'.(i) <- m.(i).(column - 1)
+      done;
+      (n, column')
+    else
+      raise (Failure "Column out of bounds.")
+
+  (** End Helper Functions **)
       
-  let scale (m: matrix) (sc: elt) : matrix = 
+  let scale (m: matrix) (sc: elt) : matrix = raise TODO
 
 
   (* Will implement by iterating through the matrix and scaling each element *)
 
+  let from_list (lsts : elt list list) : matrix = raise TODO 
+
+
   (* Adds two matrices. They must have the same dimensions *)
 
-  val add ((dim1,m1;): matrix) ((dim2,m2): matrix) : matrix =
+  let add ((dim1,m1): matrix) ((dim2,m2): matrix) : matrix =
     if dim1 = dim2 then
-      let sum = Array.make_matrix 
+      let n, p = dim1 in
+      let (dim', sum_m) = empty n p in
+      for i = 0 to n - 1 do
+        for j = 0 to p - 1 do
+          sum_m.(i).(j) <- C.add m1.(i).(j) m2.(i).(j)
+        done;
+      done;
+      (dim',sum_m)
+    else
+      raise ImproperDimensions
     
 
   (* Will add the elements elementwise and construct a new matrix *)
@@ -176,16 +182,18 @@ sig
   (* Multiplies two matrices. If the matrices have dimensions m x n and p x q, n
    * and p must be equal, and the resulting matrix will have dimension m x q *)
 
-  val mult: matrix -> matrix -> matrix
+  let mult (m1: matrix) (m2: matrix) : matrix = raise TODO
 
   (* Will take the dot product of the nth row of the first matrix and the jth
    * column of the second matrix to create the n,j th entry of the resultant *)
 
   (* Returns the row reduced form of a matrix *)
 
-  val row_reduce: matrix -> matrix
+  let row_reduce (m1: matrix) : matrix = raise TODO
 
   (* We will implement the algorithm found in the link above *)
+
+  let print (m: matrix) : unit = raise TODO
 end
 
 
