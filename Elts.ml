@@ -44,6 +44,7 @@ end
 
 module Floats : ORDERED_AND_OPERATIONAL =
 struct
+
   type t = float
   
   let epsilon = 0.000001
@@ -51,24 +52,24 @@ struct
   let zero = 0.
 
   let one = 1.
-  
-  let to_string a = string_of_float a 
 
   let compare a b = 
     let diff = (a -. b) /. a in 
     if abs_float diff < epsilon then Equal
     else if a < b then Less
     else Greater
+  
+  let to_string = string_of_float
 
-  let add a b = a +. b
+  let add = +.
 
-  let subtract a b = a -. b
+  let subtract = -.
 
-  let multiply a b = a *. b 
+  let multiply = *. 
 
-  let divide a b = a /. b 
+  let divide = /. 
 
-  let print a = print_string (string_of_float a) 
+  let print a = print_string (string_of_float a)
 
   let generate () = 3. 
 
