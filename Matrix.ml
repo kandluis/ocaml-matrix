@@ -116,7 +116,8 @@ struct
   (* Type of this is unknown, but will probably be represented using Ocaml's
    * built-in Arrays *)
 
-  (* catching negative dimensions AND 0 dimensions *)
+  (* catching negative dimensions AND 0 dimensions and too large 
+   * of a dimension so we don't have to worry about it later *)
   let empty (rows: int) (columns: int) : matrix = 
     if rows > 0 && columns > 0 then
       try
@@ -129,28 +130,82 @@ struct
   (** Helper Functions Section **)
 
   (* get's the nth row of a matrix and returns (r, row) where r is the length
-   * of the row and row is a COPY of the original row *)
-  let get_row (((n,p),m): matrix) (row: int) =
-    if row > 1 && row <= n then (* all is well *)
-      (* make a new array to enfore immutability *)
-      let row' = Array.make p C.zero in
-      for i = 0 to p - 1 do
-        row'.(i) <- m.(row - 1).(i)
-      done ;
-      (p, row')
+   * of the row and row is a COPY of the original row. For example, calling
+   * calling get_row m 1 will return (3, |1 3 4 |) 
+   *         ________
+   *    m = | 1 3 4 | 
+   *        |*2 5 6 | 
+   *)
+  (* aside: we don't check whether n < 1 because of our matrix invariant *)
+  let get_row (((n,p),m): matrix) (row: int) : int * elt array =
+    if row <= n then 
+      begin
+        (* make a new array to enfore immutability *)
+        let row' = Array.make p C.zero in
+        for i = 0 to p - 1 do
+          row'.(i) <- m.(row - 1).(i)
+        done ;
+        (p, row')
+      end
     else 
       raise (Failure "Row out of bounds.")
 
-  let get_columt (((n,p),m): matrix) (column: int) =
-    if column > 1 && column <= p then (* all is well *)
-      let column' = Array.make n C.zero in
-      for i = 0 to n - 1 do
-        column'.(i) <- m.(i).(column - 1)
-      done;
-      (n, column')
+  
+  (* similar to get_row. For m, get_column m 1 will return (2, |1 2|) *)
+  let get_column (((n,p),m): matrix) (column: int) : int * elt array =
+    if column <= p then 
+      begin
+        let column' = Array.make n C.zero in
+        for i = 0 to n - 1 do
+          column'.(i) <- m.(i).(column - 1)
+        done;
+        (n, column')
+      end
     else
       raise (Failure "Column out of bounds.")
 
+  (* sets the nth row of the matrix m to the specified array a. 
+   * This is done IN-PLACE. Therefore the function returns unit.
+   * You should nonetheless enfore immutability whenever possible. 
+   * For a clarification on what nth row means, look at comment for
+   * get_row above. 
+   *)
+  let set_row (((n,p),m): matrix) (row: int) (a: elt array) : unit =
+    if row <= n then 
+      for i = 0 to p - 1 do
+        m.(row).(i) <- a.(i)
+      done
+    else
+      raise (Failure "Row out of bounds.")
+
+  (* Similar to set_row but sets the nth column instead *)
+  let set_column (((n,p),m): matrix) (column: int) (a: elt array) : unit =
+    if column <= p then
+      for i = 0 to n - 1 do
+        m.(i).(column) <- a.(i)
+      done
+    else
+      raise (Failure "Columt out of bounds.")
+
+  (* given two arrays, this will calculate their dot product *)
+  (* It seems a little funky, but this is done for efficiency's sake.
+   * In short, it tries to multiply each element by it's respective
+   * element until the one array is indexed out of bounds. If the
+   * other array is also out of bounds, then it returns their value.
+   * Otherwise, the arrays were the wrong size and raises ImproperDimension
+
+    THE ABOVE COMMENT HAS NOT BEEN IMPLEMENTED 
+   *)
+  let dot (v1: elt array) (v2: elt array) : elt =
+    let rec dotting (i: int) (total: elt) : elt =
+      if i = 0 then total
+      else 
+        let curr = C.multiply v1.(i-1) v2.(i-1) in
+        dotting (i - 1) (C.add curr total) in
+    let len1, len2 = Array.length v1, Array.length v2 in
+    if len1 = len2 then dotting len1 C.zero
+    else raise ImproperDimensions
+    
   (** End Helper Functions **)
       
   let scale (m: matrix) (sc: elt) : matrix = raise TODO

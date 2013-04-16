@@ -61,13 +61,13 @@ struct
   
   let to_string = string_of_float
 
-  let add = +.
+  let add = (+.)
 
-  let subtract = -.
+  let subtract = (-.)
 
-  let multiply = *. 
+  let multiply = ( *. ) 
 
-  let divide = /. 
+  let divide = (/.) 
 
   let print a = print_string (string_of_float a)
 
