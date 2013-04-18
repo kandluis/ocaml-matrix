@@ -20,3 +20,4 @@ tramp
 .org-id-locations
 *_archive
 *.swp
+*.tar
