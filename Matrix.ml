@@ -139,14 +139,8 @@ struct
   (* aside: we don't check whether n < 1 because of our matrix invariant *)
   let get_row (((n,p),m): matrix) (row: int) : int * elt array =
     if row <= n then 
-      begin
-        (* make a new array to enfore immutability *)
-        let row' = Array.make p C.zero in
-        for i = 0 to p - 1 do
-          row'.(i) <- m.(row - 1).(i)
-        done ;
-        (p, row')
-      end
+      let row' = Array.map (fun x -> x) m.(row - 1) in
+      (p, row')
     else 
       raise (Failure "Row out of bounds.")
 
@@ -172,8 +166,8 @@ struct
    *)
   let set_row (((n,p),m): matrix) (row: int) (a: elt array) : unit =
     if row <= n then 
-      for i = 0 to p - 1 do
-        m.(row).(i) <- a.(i)
+      for i = 0 to n - 1 do
+        m.(row - 1).(i) <- a.(i)
       done
     else
       raise (Failure "Row out of bounds.")
@@ -182,10 +176,32 @@ struct
   let set_column (((n,p),m): matrix) (column: int) (a: elt array) : unit =
     if column <= p then
       for i = 0 to n - 1 do
-        m.(i).(column) <- a.(i)
+        m.(i).(column - 1) <- a.(i)
       done
     else
-      raise (Failure "Columt out of bounds.")
+      raise (Failure "Column out of bounds.")
+
+  (* returns the ij-th element of a matrix (not-zero indexed) *)
+  let get_elt (((n,p),m): matrix) ((i,j): int*int) : elt =
+    if i <= n && p <= j then
+      m.(i - 1).(j - 1)
+    else 
+      raise ImproperDimensions
+
+  (* similar to map, but applies to function to the entire matrix 
+   * Returns a new matrix *)
+  let matrix_map (f: 'a -> 'b) ((dim,m): matrix) : matrix = 
+    (dim, Array.map (Array.map f) m)
+
+  (* folds over each row using base case u and function f, 
+   * creating a new array with the results. Then it folds over that
+   * array with function g and base case v, returning a v.
+   *)
+  (* could be a bit more efficient? *)
+  (* let matrix_reduce (f: 'a -> 'b) (u: 'b) ((_,m): matrix) : 'b =
+    let rec fold (i: int) (j:int) (a: 'b) =
+  *)
+
 
   (* given two arrays, this will calculate their dot product *)
   (* It seems a little funky, but this is done for efficiency's sake.
@@ -213,7 +229,21 @@ struct
 
   (* Will implement by iterating through the matrix and scaling each element *)
 
-  let from_list (lsts : elt list list) : matrix = raise TODO 
+  (* This takes in a list of lists. The inners lists are the rows *)
+  let from_list (lsts : elt list list) : matrix = 
+    let rec check_length (length: int) (lst: elt list) : int =
+      if List.length lst = length then length
+      else raise (Failure "Rows are not all the same length!") in 
+    let p = List.length lsts in
+    match lsts with
+    | [] -> empty 1 1
+    | hd::tl -> 
+      let len = List.length hd in
+      if List.fold_left check_length len tl = len then
+        ((p,len),Array.map Array.of_list (Array.of_list lsts))
+      else
+        raise (Failure "Rows are not all the same length")
+
 
 
   (* Adds two matrices. They must have the same dimensions *)
@@ -235,9 +265,15 @@ struct
   (* Will add the elements elementwise and construct a new matrix *)
 
   (* Multiplies two matrices. If the matrices have dimensions m x n and p x q, n
-   * and p must be equal, and the resulting matrix will have dimension m x q *)
+   * and p must be equal, and the resulting matrix will have dimension n x q *)
 
-  let mult (m1: matrix) (m2: matrix) : matrix = raise TODO
+  let mult (((m,n),m1): matrix) (((p,q),m2): matrix) : matrix = 
+    raise TODO 
+    (* if n = p then
+      for i = 0 to n - 1 do
+        for j = 0 to m - 1 do *)
+          
+
 
   (* Will take the dot product of the nth row of the first matrix and the jth
    * column of the second matrix to create the n,j th entry of the resultant *)
