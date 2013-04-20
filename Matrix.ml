@@ -190,11 +190,17 @@ struct
 
   (* similar to map, but applies to function to the entire matrix 
    * Returns a new matrix *)
-  let matrix_map (f: 'a -> 'b) ((dim,m): matrix) : matrix = 
+  let map (f: 'a -> 'b) ((dim,m): matrix) : matrix = 
     (dim, Array.map (Array.map f) m)
 
-  let matrix_iter (f: 'a -> unit) ((dim,m): matrix) : unit =
+  (* Just some wrapping of Array.iter made for Matrices! *)
+  let iter (f: 'a -> unit) ((dim,m): matrix) : unit =
     Array.iter (Array.iter f) m
+
+  (* Just some wrapping of Array.iteri. Useful for pretty
+   * printing matrix. The index is (i,j). NOT zero-indexed *)
+  let iteri (f: int -> int -> 'a -> unit) ((dim,m): matrix) : unit =
+    Array.iteri (fun i row -> Array.iteri (fun j e -> f (i+1) (j+1) e) row) m 
 
   (* folds over each row using base case u and function f, 
    * creating a new array with the results. Then it folds over that
@@ -299,8 +305,17 @@ struct
 
   (* We will implement the algorithm found in the link above *)
 
-  let print (m: matrix) : unit = 
-    matrix_iter C.print m
+  let print (m: matrix) : unit =
+    let ((row,col), m') = m in
+    let pretty_print (_: int) (j: int) (e: elt) =
+      if j = 1 then
+        print_string "|"
+      else ();
+      C.print e;
+      if j = col then
+        print_string "|\n"
+      else () in
+    iteri pretty_print m
 end
 
 module FloatMatrix = Matrix(Floats) ;;
