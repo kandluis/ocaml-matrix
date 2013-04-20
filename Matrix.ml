@@ -56,18 +56,20 @@ sig
   (* Returns the norm of the matrix *)
 
     val norm: matrix -> elt
-
-  (* Transposes a matrix. If the input has dimensions m x n, the output will
+  *)
+  (*Transposes a matrix. If the input has dimensions m x n, the output will
    * have dimensions n x m *)
 
     val transpose: matrix -> matrix
+
 
   (* Will basically ``flip'' the indices of the input matrix *)
 
   (* Returns the trace of the matrix *)
 
-    val trace: matrix -> elt
+    val trace: matrix -> elt list
 
+  (*
   (* Will check if the matrix is square, then sum up all the elements along its
    * diagonal *)
 
@@ -294,8 +296,6 @@ struct
     else
       raise ImproperDimensions
           
-
-
   (* Will take the dot product of the nth row of the first matrix and the jth
    * column of the second matrix to create the n,j th entry of the resultant *)
 
@@ -316,6 +316,29 @@ struct
         print_string "|\n"
       else () in
     iteri pretty_print m
+
+
+  (** Optional module functions **)
+
+  (* calculates the trace of a matrix and returns it as an elt list *)
+  let trace (((n,p),m): matrix) : elt list =
+    let rec build (lst: elt list) (i: int) =
+      if i > 0 then
+        build (m.(i).(i)::lst) (i - 1)
+      else
+        lst in
+    if n = p then build [] n
+    else raise ImproperDimensions 
+
+  (* calculates the transpose of a matrix and retuns a new one *)
+  let transpose (((n,p),m): matrix) =
+    let m' = empty p n in
+    for i = 0 to n - 1 do
+      for j = 0 to p - 1 do
+        m'.(j).(i) <- m.(i).(j)
+      done;
+    done;
+    ((p,n),m')
 end
 
 module FloatMatrix = Matrix(Floats) ;;
