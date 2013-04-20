@@ -193,15 +193,22 @@ struct
   let matrix_map (f: 'a -> 'b) ((dim,m): matrix) : matrix = 
     (dim, Array.map (Array.map f) m)
 
+  let matrix_iter (f: 'a -> unit) ((dim,m): matrix) : unit =
+    Array.iter (Array.iter f) m
+
   (* folds over each row using base case u and function f, 
    * creating a new array with the results. Then it folds over that
    * array with function g and base case v, returning a v.
    *)
   (* could be a bit more efficient? *)
-  (* let matrix_reduce (f: 'a -> 'b) (u: 'b) ((_,m): matrix) : 'b =
-    let rec fold (i: int) (j:int) (a: 'b) =
-  *)
-
+  let matrix_reduce (f: 'a -> 'b -> 'a) (u: 'a) (((p,q),m): matrix) : 'b =
+    let total = ref u in
+      for i = 0 to p - 1 do
+        for j = 0 to q - 1 do
+          total := f (!total) m.(i).(j) 
+        done;
+      done;
+    !total
 
   (* given two arrays, this will calculate their dot product *)
   (* It seems a little funky, but this is done for efficiency's sake.
@@ -267,11 +274,19 @@ struct
   (* Multiplies two matrices. If the matrices have dimensions m x n and p x q, n
    * and p must be equal, and the resulting matrix will have dimension n x q *)
 
-  let mult (((m,n),m1): matrix) (((p,q),m2): matrix) : matrix = 
-    raise TODO 
-    (* if n = p then
-      for i = 0 to n - 1 do
-        for j = 0 to m - 1 do *)
+  let mult (matrix1: matrix) (matrix2: matrix) : matrix =  
+    let ((m,n),m1), ((p,q),m2) = matrix1, matrix2 in
+    if n = p then
+      let (dim, result) = empty m q in
+      for i = 0 to m - 1 do
+        for j = 0 to q - 1 do
+          let (_,row), (_,column) = get_row matrix1 (i + 1), get_column matrix2 (j + 1) in
+          result.(i).(j) <- dot row column
+        done;
+      done;
+      (dim,result)
+    else
+      raise ImproperDimensions
           
 
 
@@ -284,7 +299,8 @@ struct
 
   (* We will implement the algorithm found in the link above *)
 
-  let print (m: matrix) : unit = raise TODO
+  let print (m: matrix) : unit = 
+    matrix_iter C.print m
 end
 
-
+module FloatMatrix = Matrix(Floats) ;;
