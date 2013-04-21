@@ -239,7 +239,7 @@ struct
     
   (** End Helper Functions **)
       
-  let scale (m: matrix) (sc: elt) : matrix = map (fun x -> C.multiply x sc) m
+  let scale (m: matrix) (sc: elt) : matrix = map (C.multiply sc) m
 
   (* Will implement by iterating through the matrix and scaling each element *)
 
@@ -331,12 +331,13 @@ struct
 
   (* calculates the transpose of a matrix and retuns a new one *)
   let transpose (((n,p),m): matrix) =
-    let m' = empty p n in
+    let (dim,m') = empty p n in
     for i = 0 to n - 1 do
       for j = 0 to p - 1 do
         m'.(j).(i) <- m.(i).(j)
       done;
     done;
+    assert(dim = (p,n));
     ((p,n),m')
 end
 
