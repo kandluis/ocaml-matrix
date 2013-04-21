@@ -239,8 +239,7 @@ struct
     
   (** End Helper Functions **)
       
-  let scale (m: matrix) (sc: elt) : matrix = raise TODO
-
+  let scale (m: matrix) (sc: elt) : matrix = map (fun x -> C.multiply x sc) m
 
   (* Will implement by iterating through the matrix and scaling each element *)
 
