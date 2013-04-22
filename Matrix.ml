@@ -49,7 +49,7 @@ sig
   (*
   (* Returns the inverse of a matrix *)
     
-    val inverse: matrix -> matrix
+  val inverse: matrix -> matrix
     
   (* Will implement this based on the specification in the Algorithms book *)
 
@@ -60,14 +60,14 @@ sig
   (*Transposes a matrix. If the input has dimensions m x n, the output will
    * have dimensions n x m *)
 
-    val transpose: matrix -> matrix
+  val transpose: matrix -> matrix
 
 
   (* Will basically ``flip'' the indices of the input matrix *)
 
   (* Returns the trace of the matrix *)
 
-    val trace: matrix -> elt list
+  val trace: matrix -> elt list
 
   (*
   (* Will check if the matrix is square, then sum up all the elements along its
@@ -75,7 +75,7 @@ sig
 
   (* Returns the determinant of the matrix *)
   
-    val det: matrix -> elt
+  val det: matrix -> elt
 
   (* Will implement this algorithm based on a description in Hubbard. Involves
    * column reducing the input (or row-reducing the transpose) and then keeping
@@ -83,7 +83,7 @@ sig
 
   (* Returns a list of eigenvalues and eigenvectors of a matrix *)
 
-    val eigen: matrix -> (elt *matrix) list option
+  val eigen: matrix -> (elt *matrix) list option
 
   (* Calculates successive powers of the input matrix, each multiplied by the
    * same basis vector. Generates a polynomial and solves for zeros, which
@@ -91,7 +91,7 @@ sig
 
   (* Takes a string and builds a matrix from it *)
     
-    val from_string : string -> matrix
+  val from_string : string -> matrix
     
   (* We will have some way to express matrices using strings, and then we will
     * parse the string to give the matrix *)
