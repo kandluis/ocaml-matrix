@@ -209,7 +209,7 @@ struct
    * array with function g and base case v, returning a v.
    *)
   (* could be a bit more efficient? *)
-  let matrix_reduce (f: 'a -> 'b -> 'a) (u: 'a) (((p,q),m): matrix) : 'b =
+  let reduce (f: 'a -> 'b -> 'a) (u: 'a) (((p,q),m): matrix) : 'b =
     let total = ref u in
       for i = 0 to p - 1 do
         for j = 0 to q - 1 do
@@ -299,6 +299,30 @@ struct
    * column of the second matrix to create the n,j th entry of the resultant *)
 
   (* Returns the row reduced form of a matrix *)
+  (** Helper functions for row_reduce **)
+
+  (* returns the index of the first non-zero elt in an array*)
+  let zero (arr: elt array) : int option =
+    let index = ref 1 in
+    let empty (e: elt) (i: int option): int option =
+      match i, C.compare e C.zero with
+      | None, Equal -> (index := !index + 1; None)
+      | None, _ -> Some index 
+      | _, _ -> i in
+    Array.fold_left empty None arr
+
+  (* returns the the location of the first non-zero
+   * element in the matrix. *)
+  let first_nz_row (m: matrix) : (int*int) option =
+    let ((n,p),m') = m in
+    let rec check_col (j: int) =
+      if j <= p then
+        let (_,col) = get_column m j in
+        match zero col with
+        | None -> check_col (j + 1)
+        | Some i -> Some (i,j) 
+      else None
+
 
   let row_reduce (m1: matrix) : matrix = raise TODO
 
