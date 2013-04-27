@@ -14,6 +14,8 @@ sig
   (* Converts a t to a string *)
   val to_string : t -> string
 
+  val from_string : string -> t
+
 
   val add: t -> t -> t
 
@@ -63,6 +65,8 @@ struct
     else Greater
   
   let to_string = string_of_float
+
+  let from_string = float_of_string
 
   let add = (+.)
 

@@ -375,11 +375,11 @@ struct
       row1.(i) <- C.subtract row1.(i) (C.multiply sc row2.(i))
     done;;
 
-  let row_reduce (mat: matrix) : matrix = 
-    let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
+  let row_reduce (mat: matrix) : matrix = mat
+   (* let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
       (* Matrices are 1-indexed *)
       let ((num_row, num_col), arr) = mat2 in
-      let col = get_column mat2 n_col in
+      let (_,col) = get_column mat2 n_col in
       match find_max_col_index col with
       | None (* Column all 0s *) -> row_reduce_h (n_row+1) (n_col+1) mat2 
       | Some index -> (* Should it be index+1 *)
@@ -392,12 +392,12 @@ struct
         row_reduce_h (n_row+1) (n_col+1) mat2
     in
     row_reduce_h 1 1 mat
-
+*)
   (* Find largest non-zero elt in first column. If none exists go to next col *)
 
   (* Scale row by 1/(that elt) *)
 
-  (* Subtract a * that row for
+  (* Subtract a * that row for *)
 
   (* We will implement the algorithm found in the link above *)
 
