@@ -349,6 +349,9 @@ struct
       else None in
     check_col 1
 
+  (* Make sure this is 0-indexed *)
+  let find_max_col_index (arr: elt array) : int option = raise TODO
+
   (* Basic row operations *)
   let scale_row (m: matrix) (num: int) (sc: elt) : unit = 
     let (len, row) = get_row m num in 
@@ -368,11 +371,33 @@ struct
     let (len1, row1) = get_row m r1 in
     let (len2, row2) = get_row m r2 in
     let _ = assert (len1 = len2) in
-    for i = 0 to len1 - 1 do
+    for i = 0 to len1 - 1 do (* Arrays are 0-indexed *)
       row1.(i) <- C.subtract row1.(i) (C.multiply sc row2.(i))
     done;;
 
-  let row_reduce (m1: matrix) : matrix = m1
+  let row_reduce (mat: matrix) : matrix = 
+    let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
+      (* Matrices are 1-indexed *)
+      let ((num_row, num_col), arr) = mat2 in
+      let col = get_column mat2 n_col in
+      match find_max_col_index col with
+      | None (* Column all 0s *) -> row_reduce_h (n_row+1) (n_col+1) mat2 
+      | Some index -> (* Should it be index+1 *)
+        if index <> n_row then let _ = swap_row mat2 index n_row in
+        let pivot = get_elt n_row n_col in
+        let _ = scale_row mat2 (n_row+1) pivot in
+        for i = 1 to num_rows do
+          if i <> n_row then let _ = sub_mult mat2 i n_row in
+        done
+        row_reduce_h (n_row+1) (n_col+1) mat2
+    in
+    row_reduce_h 1 1 mat
+
+  (* Find largest non-zero elt in first column. If none exists go to next col *)
+
+  (* Scale row by 1/(that elt) *)
+
+  (* Subtract a * that row for
 
   (* We will implement the algorithm found in the link above *)
 
