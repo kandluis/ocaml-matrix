@@ -313,18 +313,24 @@ struct
       | _, _ -> i in
     Array.fold_left empty None arr
 
-  (* returns the the location of the first non-zero
-   * element in the matrix. *)
-  let first_nz_row (m: matrix) : (int*int) option =
+  (* returns the the location of the nth non-zero
+   * element in the matrix. Scans column wise.
+   * So the nth non-zero element is the FIRST non-zero
+   * element in the nth non-zero column *)
+  let nth_nz_location (m: matrix) (n: int): (int*int) option =
     let ((n,p),m') = m in
-    let rec check_col (j: int) =
+    let rec check_col (to_skip: int) (j: int) =
       if j <= p then
         let (_,col) = get_column m j in
         match zero col with
-        | None -> check_col (j + 1)
-        | Some i -> Some (i,j) 
+        | None -> check_col to_skip (j + 1)
+        | Some i -> 
+          if to_skip = 0 then 
+            Some (i,j)
+          else (* we want a later column *) 
+            check_col (to_skip - 1) (j + 1)
       else None in
-    check_col 1
+    check_col (n - 1) 1
 
   (* Basic row operations *)
   let scale_row (m: matrix) (num: int) (sc: elt) : unit = 
