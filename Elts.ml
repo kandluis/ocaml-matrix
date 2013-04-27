@@ -40,6 +40,9 @@ sig
   (* Generates a t in between the two arguments. Returns none if none exist *)
   val generate_between: t -> t -> unit -> t option
 
+  (* Special test function specifically for float*)
+  val generate_x: float -> unit -> t 
+
 end
 
 module Floats : ORDERED_AND_OPERATIONAL =
@@ -78,8 +81,6 @@ struct
   let generate_lt a () = a -. 1. 
 
   let generate_between a b () = if a > b then None else Some((a +. b)/. 2.)
-
-
   
-
+  let generate_x x () = (x:t)
 end

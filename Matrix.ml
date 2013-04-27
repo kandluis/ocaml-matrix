@@ -391,6 +391,7 @@ struct
         print_string "|"
       else ();
       C.print e;
+      print_char ' ';
       if j = col then
         print_string "|\n"
       else () in
@@ -422,3 +423,9 @@ struct
 end
 
 module FloatMatrix = Matrix(Floats) ;;
+let a = Floats.generate () in
+let b = Floats.generate_gt a () in
+let c = Floats.generate_gt b () in
+let d = Floats.generate_gt c () in
+let test = FloatMatrix.from_list [[a;b];[c;d]] in
+FloatMatrix.print test;;
