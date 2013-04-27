@@ -312,18 +312,6 @@ struct
       | _, _ -> i in
     Array.fold_left empty None arr
 
-  (* returns the index of the first non-zero and non-one elt
-   * in an array *)
-  let zero_one (arr: elt array) : int option =
-    let index = ref 1 in
-    let empty (i: int option) (e: elt) : int option =
-      match i, C.compare e C.zero, C.compare e C.one with
-      | None, Equal, _ 
-      | None, _, Equal -> (index := !index + 1; None)
-      | None, _, _ -> Some (!index) 
-      | _, _, _ -> i in
-    Array.fold_left empty None arr
-
   (* returns the the location of the nth non-zero
    * element in the matrix. Scans column wise.
    * So the nth non-zero element is the FIRST non-zero
@@ -345,7 +333,8 @@ struct
 
   (* returns the the location of the first
    * non-zero and non-one elt. Scans column wise, from
-   * left to right *)
+   * left to right. Basically, it ignores columns
+   * that are all zero or that *)
   let fst_nz_no_loc (m: matrix): (int*int) option =
     let ((n,p),m') = m in
     let rec check_col (j: int) =
@@ -353,7 +342,10 @@ struct
         let (_,col) = get_column m j in
         match zero_one col with
         | None -> check_col (j + 1)
-        | Some i -> Some (i,j)
+        | Some i -> 
+          match C.compare col.(i-1) C.one with
+          | Equal -> check_col (j + 1)
+          | _ -> Some (i,j)
       else None in
     check_col 1
 
