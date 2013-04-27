@@ -27,7 +27,7 @@ let parse_args () : unit =
   if Array.length Sys.argv <> 2 then usage ();
   let filename =  Sys.argv.(1) in
   try 
-    let inchan = open_in in 
+    let inchan = open_in filename in 
     let m_list = read_data inchan in
     let matrix = FloatMatrix.from_list m_list in
     (* do simplex stuff here and print *) ()
