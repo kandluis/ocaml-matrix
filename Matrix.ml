@@ -340,7 +340,7 @@ struct
     let rec check_col (j: int) =
       if j <= p then
         let (_,col) = get_column m j in
-        match zero_one col with
+        match zero col with
         | None -> check_col (j + 1)
         | Some i -> 
           match C.compare col.(i-1) C.one with
