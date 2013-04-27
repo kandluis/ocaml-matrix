@@ -1,3 +1,4 @@
+open Order
 open Elts
 
 exception TODO
@@ -304,10 +305,10 @@ struct
   (* returns the index of the first non-zero elt in an array*)
   let zero (arr: elt array) : int option =
     let index = ref 1 in
-    let empty (e: elt) (i: int option): int option =
+    let empty (i: int option) (e: elt) : int option =
       match i, C.compare e C.zero with
       | None, Equal -> (index := !index + 1; None)
-      | None, _ -> Some index 
+      | None, _ -> Some (!index) 
       | _, _ -> i in
     Array.fold_left empty None arr
 
@@ -321,7 +322,8 @@ struct
         match zero col with
         | None -> check_col (j + 1)
         | Some i -> Some (i,j) 
-      else None
+      else None in
+    check_col 1
 
 
   let row_reduce (m1: matrix) : matrix = raise TODO
