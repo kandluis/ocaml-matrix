@@ -303,7 +303,6 @@ struct
   (** Helper functions for row_reduce **)
 
   (* returns the index of the first non-zero elt in an array*)
-  
   let zero (arr: elt array) : int option =
     let index = ref 1 in
     let empty (i: int option) (e: elt) : int option =
@@ -311,6 +310,18 @@ struct
       | None, Equal -> (index := !index + 1; None)
       | None, _ -> Some (!index) 
       | _, _ -> i in
+    Array.fold_left empty None arr
+
+  (* returns the index of the first non-zero and non-one elt
+   * in an array *)
+  let zero_one (arr: elt array) : int option =
+    let index = ref 1 in
+    let empty (i: int option) (e: elt) : int option =
+      match i, C.compare e C.zero, C.compare e C.one with
+      | None, Equal, _ 
+      | None, _, Equal -> (index := !index + 1; None)
+      | None, _, _ -> Some (!index) 
+      | _, _, _ -> i in
     Array.fold_left empty None arr
 
   (* returns the the location of the nth non-zero
@@ -331,6 +342,20 @@ struct
             check_col (to_skip - 1) (j + 1)
       else None in
     check_col (n - 1) 1
+
+  (* returns the the location of the first
+   * non-zero and non-one elt. Scans column wise, from
+   * left to right *)
+  let fst_nz_no_loc (m: matrix): (int*int) option =
+    let ((n,p),m') = m in
+    let rec check_col (j: int) =
+      if j <= p then
+        let (_,col) = get_column m j in
+        match zero_one col with
+        | None -> check_col (j + 1)
+        | Some i -> Some (i,j)
+      else None in
+    check_col 1
 
   (* Basic row operations *)
   let scale_row (m: matrix) (num: int) (sc: elt) : unit = 
