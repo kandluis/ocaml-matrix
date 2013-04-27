@@ -1,4 +1,5 @@
-open Elts
+open Elts 
+open Order
 
 exception TODO
 
@@ -302,6 +303,7 @@ struct
   (** Helper functions for row_reduce **)
 
   (* returns the index of the first non-zero elt in an array*)
+  (*
   let zero (arr: elt array) : int option =
     let index = ref 1 in
     let empty (e: elt) (i: int option): int option =
@@ -322,13 +324,36 @@ struct
         | None -> check_col (j + 1)
         | Some i -> Some (i,j) 
       else None
+      *)
 
+  (* Basic row operations *)
+  let scale_row (m: matrix) (num: int) (sc: elt) : unit = 
+    let (len, row) = get_row m num in 
+    let new_row = Array.map (fun a -> C.multiply sc a) row in
+    set_row m num new_row
 
-  let row_reduce (m1: matrix) : matrix = raise TODO
+  let swap_row (m: matrix) (r1: int) (r2: int) : unit =
+    let (len1, row1) = get_row m r1 in
+    let (len2, row2) = get_row m r2 in
+    let _ = assert (len1 = len2) in 
+    let _ = set_row m r1 row2 in 
+    let _ = set_row m r2 row1 in
+    ()
+
+  (* Subtracts a multiple of r2 from r1 *)
+  let sub_mult (m: matrix) (r1: int) (r2: int) (sc: elt) : unit = 
+    let (len1, row1) = get_row m r1 in
+    let (len2, row2) = get_row m r2 in
+    let _ = assert (len1 = len2) in
+    for i = 0 to len1 - 1 do
+      row1.(i) <- C.subtract row1.(i) (C.multiply sc row2.(i))
+    done;;
+
+  let row_reduce (m1: matrix) : matrix = m1
 
   (* We will implement the algorithm found in the link above *)
 
-  let print (m: matrix) : unit =
+   let print (m: matrix) : unit =
     let ((row,col), m') = m in
     let pretty_print (_: int) (j: int) (e: elt) =
       if j = 1 then
