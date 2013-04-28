@@ -16,10 +16,11 @@ let explode (s: string) (space: string) : string list =
   to_list s []
 
 let rec read_data (chan: in_channel) : Floats.t list list =  
-  let row = input_line chan in
-  let chars = explode row "," in
-  (List.map Floats.from_string chars)::read_data chan
-
+  try
+    let row = input_line chan in
+    let chars = explode row "," in
+    (List.map Floats.from_string chars)::read_data chan
+  with End_of_file -> []
 
 (* Parse command-line arguments. Parses filename *)
 let parse_args () : unit =
