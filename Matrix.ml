@@ -349,8 +349,41 @@ struct
       else None in
     check_col 1
 
-  (* Make sure this is 0-indexed *)
-  let find_max_col_index (arr: elt array) : int option = raise TODO
+  (* Finds the element with the greatest absolute value in a column. Is not 
+   * 0-indexed. If two elements are both the maximum value, returns the one with
+   * the lowest index. Returns None if this element is zero (if column is all 0)
+   * *)
+
+  let find_max_col_index (array1: elt array) : int option = 
+    (* Compares two elements in an elt array and returns the greater and its
+     * index *)
+    let compare_helper (e1: elt) (e2: elt) (ind1: int) (ind2: int) : (elt*int) = 
+      match C.compare e1 e2 with 
+      | Equal -> (e2, ind2)
+      | Greater -> (e1, ind1)
+      | Less -> (e2, ind2) 
+    in
+
+    (* Helper function *) 
+    let rec find_index (max_index: int) (curr_max: elt) (curr_index: int) 
+        (arr: elt array) = 
+      if curr_index > Array.length arr then 
+        (if curr_max = C.zero then None
+        else Some (max_index+1)) (* Arrays are 0-indexed but matrices aren't *)
+      else
+        (match C.compare arr.(curr_index) C.zero with
+        | Equal -> find_index max_index curr_max (curr_index+1) arr
+        | Greater -> 
+          (let (el, index) = compare_helper (arr.(curr_index)) curr_max curr_index
+            max_index in
+          find_index index el (curr_index+1) arr)
+        | Less -> 
+          (let abs_curr_elt = C.subtract C.zero arr.(curr_index) in
+          let (el, index) = compare_helper abs_curr_elt curr_max curr_index
+            max_index in
+          find_index index el (curr_index+1) arr))
+    in
+    find_index 0 C.zero 0 array1
 
   (* Basic row operations *)
   let scale_row (m: matrix) (num: int) (sc: elt) : unit = 
@@ -375,31 +408,34 @@ struct
       row1.(i) <- C.subtract row1.(i) (C.multiply sc row2.(i))
     done;;
 
-  let row_reduce (mat: matrix) : matrix = mat
-   (* let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
+  let row_reduce (mat: matrix) : matrix =
+    let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
       (* Matrices are 1-indexed *)
       let ((num_row, num_col), arr) = mat2 in
-      let (_,col) = get_column mat2 n_col in
-      match find_max_col_index col with
-      | None (* Column all 0s *) -> row_reduce_h (n_row+1) (n_col+1) mat2 
-      | Some index -> (* Should it be index+1 *)
-        if index <> n_row then let _ = swap_row mat2 index n_row in
-        let pivot = get_elt n_row n_col in
-        let _ = scale_row mat2 (n_row+1) pivot in
-        for i = 1 to num_rows do
-          if i <> n_row then let _ = sub_mult mat2 i n_row in
-        done
-        row_reduce_h (n_row+1) (n_col+1) mat2
+      if (num_row = n_row) && (num_col = n_col) then ()
+      else
+        (let (_,col) = get_column mat2 n_col in
+        match find_max_col_index col with
+        | None (* Column all 0s *) -> row_reduce_h (n_row+1) (n_col+1) mat2 
+        | Some index -> 
+          (* (if index <> n_row then swap_row mat2 index n_row; (* (let _ =
+          swap_row mat2 index n_row in) *) *)
+          swap_row mat2 index n_row; 
+          let pivot = get_elt mat2 (n_row, n_col) in
+          let _ = scale_row mat2 (n_row+1) (C.divide C.one pivot) in
+          for i = 1 to num_row do
+            if i <> n_row then sub_mult mat2 i n_row (get_elt mat2 (i,n_col))
+          done;
+          row_reduce_h (n_row+1) (n_col+1) mat2)
     in
-    row_reduce_h 1 1 mat
-*)
-  (* Find largest non-zero elt in first column. If none exists go to next col *)
-
-  (* Scale row by 1/(that elt) *)
-
-  (* Subtract a * that row for *)
-
-  (* We will implement the algorithm found in the link above *)
+    let ((n,p),m) = mat in
+    let (dim,mat_cp) = empty n p in
+    for i = 0 to n - 1 do
+      for j = 0 to p - 1 do
+        mat_cp.(i).(j) <- m.(i).(j)
+      done;
+    done;
+    let _ = row_reduce_h 1 1 (dim,mat_cp) in (dim,mat_cp)
 
    let print (m: matrix) : unit =
     let ((row,col), m') = m in
