@@ -24,6 +24,15 @@ sig
    * and p must be equal, and the resulting matrix will have dimension m x q *)
   val mult: matrix -> matrix -> matrix
 
+  (* Scales a row *)
+  val scale_row: matrix -> int -> elt -> unit
+
+  (* Swaps two rows *)
+  val swap_row: matrix -> int -> int -> unit
+
+  (* Subtracts a multiple of one row (the 2nd int) from another (the 1st int) *)
+  val sub_mult: matrix -> int -> int -> elt -> unit
+
   (* Returns the row reduced form of a matrix *)
   val row_reduce: matrix -> matrix
   (* We will implement the algorithm found in the link above *)

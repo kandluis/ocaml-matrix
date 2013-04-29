@@ -285,11 +285,13 @@ struct
     find_index 0 C.zero 0 array1
 
   (* Basic row operations *)
+  (* Scales a row by sc *)
   let scale_row (m: matrix) (num: int) (sc: elt) : unit = 
     let (len, row) = get_row m num in 
     let new_row = Array.map (fun a -> C.multiply sc a) row in
     set_row m num new_row
 
+  (* Swaps two rows of a matrix *)
   let swap_row (m: matrix) (r1: int) (r2: int) : unit =
     let (len1, row1) = get_row m r1 in
     let (len2, row2) = get_row m r2 in
@@ -436,15 +438,13 @@ let d = Floats.generate_gt c ();;
 let test1 = FloatMatrix.from_list [[a;b];[c;d]];;
 FloatMatrix.print test1;;
 
-let test2 = FloatMatrix.from_list[[a;a];[c;c]];;
-let test12 = FloatMatrix.add test1 test2;;
-FloatMatrix.print test12;;
 let test3 = Array.make 2 a;;
 match FloatMatrix.find_max_col_index test3 with
 | None -> print_string ("None")
-| Some index -> print_string (string_of_int index)
+| Some index -> print_string (string_of_int index); print_string "\n"
 ;;
 
+(*
 let test1_reduced = FloatMatrix.row_reduce test1;;
-FloatMatrix.print test1_reduced;;
+FloatMatrix.print test1_reduced;;*)
 
