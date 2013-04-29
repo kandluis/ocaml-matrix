@@ -1,7 +1,8 @@
 open Elts
 open Simplex
-
-module FloatMatrix = Matrix(Floats) ;;
+(* Luis I had to change this to Matrix.Matrix(Floats) instead of Matrix(Floats)
+ * which is what you had originally. ~Andy *)
+module FloatMatrix = Matrix.Matrix(Floats) ;;
 
 let explode (s: string) (space: string) : string list =
   let rec to_list (s1: string) (acc: string list) : string list =
@@ -21,6 +22,7 @@ let rec read_data (chan: in_channel) : Floats.t list list =
   (List.map Floats.from_string chars)::read_data chan
 
 
+(*
 (* Parse command-line arguments. Parses filename *)
 let parse_args () : unit =
   let usage () = Printf.printf "usage: %s argument\n" Sys.argv.(0); exit 1 in
@@ -35,3 +37,4 @@ let parse_args () : unit =
     usage ()
 
 parse_args () ;;
+*)
