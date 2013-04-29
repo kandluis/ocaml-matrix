@@ -1,5 +1,3 @@
-open Order
-
 module type ORDERED_AND_OPERATIONAL =
 sig
   type t
@@ -60,9 +58,9 @@ struct
 
   let compare a b = 
     let diff = (a -. b) /. a in 
-    if abs_float diff < epsilon then Equal
-    else if a < b then Less
-    else Greater
+    if abs_float diff < epsilon then Order.Equal
+    else if a < b then Order.Less
+    else Order.Greater
   
   let to_string = string_of_float
 
