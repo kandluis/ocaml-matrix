@@ -101,11 +101,11 @@ struct
 
   (* similar to map, but applies to function to the entire matrix 
    * Returns a new matrix *)
-  let map (f: 'a -> 'b) ((dim,m): matrix) : matrix = 
+  let map (f: elt -> elt) ((dim,m): matrix) : matrix = 
     (dim, Array.map (Array.map f) m)
 
   (* Just some wrapping of Array.iter made for Matrices! *)
-  let iter (f: 'a -> unit) ((dim,m): matrix) : unit =
+  let iter (f: elt -> unit) ((dim,m): matrix) : unit =
     Array.iter (Array.iter f) m
 
   (* Just some wrapping of Array.iteri. Useful for pretty
@@ -417,6 +417,40 @@ struct
   (*************** Optional module functions ***************)
 
   (*************** Tests ***************)
+  let print_loc i j =  print_string ("Failed @ " ^ string_of_int i ^ " and " ^
+            string_of_int j)
+
+  let rec test_empty (times: int) : unit =
+    if times = 0 then ()
+    else
+      let dimx, dimy = Random.int times + 1, Random.int times + 1 in
+      let ((x,y),t_mat) = empty dimx dimy in
+      assert(x = dimx);
+      assert(y = dimy);
+      for i = 0 to dimx - 1 do
+        for j = 0 to dimy - 1 do
+          match C.compare C.zero t_mat.(i).(j) with
+          | Equal -> ()
+          | _ -> print_loc i j
+        done;
+      done;
+      test_empty (times - 1)
+
+  let rec test_get_row (times: int): unit =
+    if times = 0 then ()
+    else
+      let dimx, dimy = Random.int times + 1, Random.int times + 1 in
+      let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) (empty dimx dimy) in
+      for i = 1 to dimx do
+        let (dim,row) = get_row (extra, t_mat) i in
+        assert(dim = dimy);
+        for j = 1 to dimx do
+          match C.compare t_mat.(i-1).(j-1) row.(j-1) with
+          | Equal -> ()
+          | _ -> print_loc i j
+        done;
+      done;
+      test_get_row (times - 1)
 
   (*************** Testing Helper Functions ***************)
 
@@ -426,12 +460,18 @@ struct
 
   (*************** End Testing Main Functions ***************)
 
-  let run_tests () = ()
+  let run_tests times = 
+    test_empty times;
+    (*test_get_row times;*)
+    ()
 
 end
 
-(*module FloatMatrix = Matrix(Floats)
+module FloatMatrix = Matrix(Floats)
 
+let _ = FloatMatrix.run_tests 1 ;;
+
+(*
 let a = Floats.generate ();;
 let b = Floats.generate_gt a ();;
 let c = Floats.generate_gt b ();;

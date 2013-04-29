@@ -43,6 +43,9 @@ sig
   (* Special test function specifically for float*)
   val generate_x: float -> unit -> t 
 
+  (* Specfial funtion to tests *)
+  val generate_random : float -> unit -> t
+  
 end
 
 module Floats : ORDERED_AND_OPERATIONAL =
@@ -56,11 +59,17 @@ struct
 
   let one = 1.
 
-  let compare a b = 
-    let diff = (a -. b) /. a in 
-    if abs_float diff < epsilon then Order.Equal
-    else if a < b then Order.Less
-    else Order.Greater
+  let compare a b =
+    let a', b' = abs_float a, abs_float b in
+    if a' < epsilon && b' < epsilon then 
+      Order.Equal
+    else 
+      let diff = (a -. b) /. (max a' b') in 
+      if abs_float diff < epsilon then Order.Equal
+      else if a < b then Order.Less
+      else if a > b then Order.Greater
+      else
+        raise (Failure "Error in compare.")
   
   let to_string = string_of_float
 
@@ -85,4 +94,8 @@ struct
   let generate_between a b () = if a > b then None else Some((a +. b)/. 2.)
   
   let generate_x x () = (x:t)
+
+  let generate_random bound () =
+    let x = Random.float bound in
+    x -. mod_float x epsilon
 end

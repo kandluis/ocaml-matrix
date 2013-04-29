@@ -24,15 +24,6 @@ sig
    * and p must be equal, and the resulting matrix will have dimension m x q *)
   val mult: matrix -> matrix -> matrix
 
-  (* Scales a row *)
-  val scale_row: matrix -> int -> elt -> unit
-
-  (* Swaps two rows *)
-  val swap_row: matrix -> int -> int -> unit
-
-  (* Subtracts a multiple of one row (the 2nd int) from another (the 1st int) *)
-  val sub_mult: matrix -> int -> int -> elt -> unit
-
   (* Returns the row reduced form of a matrix *)
   val row_reduce: matrix -> matrix
   (* We will implement the algorithm found in the link above *)
@@ -54,6 +45,34 @@ sig
 
   (* For testing only *)
   val find_max_col_index: elt array -> int option 
+
+  (****** Used in the Simplex Algorithm Directly ******)
+  (** All of the following functions will raise ImproperDimensions
+   * Exception if the matrix is not the right size for the operation 
+  **)
+  (* get's the row of a matrix: Not zero-indexed. *)
+  val get_row : matrix -> int -> (int * elt array)
+
+  (* similar to get_row *)
+  val get_column: matrix -> int -> (int * elt array)
+
+  (* sets the row of a matrix in place! Not zero-index *)
+  val set_row: matrix -> int -> elt array -> unit 
+
+  (* similar to set_row, but for a column *)
+  val set_column: matrix -> int -> elt array -> unit
+
+  (* gets the element at the specified index. *)
+  val get_elt: matrix -> (int * int) -> elt 
+
+  (* Scales a row *)
+  val scale_row: matrix -> int -> elt -> unit
+
+  (* Swaps two rows *)
+  val swap_row: matrix -> int -> int -> unit
+
+  (* Subtracts a multiple of one row (the 2nd int) from another (the 1st int) *)
+  val sub_mult: matrix -> int -> int -> elt -> unit
 
   (*
   (* Returns the determinant of the matrix *)
@@ -84,6 +103,6 @@ sig
   val print : matrix -> unit
 
   (* Runs tests on the Matrix Module *)
-  val run_tests : unit -> unit 
+  val run_tests : int -> unit 
 
 end
