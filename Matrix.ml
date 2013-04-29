@@ -330,6 +330,7 @@ struct
           done;
           row_reduce_h (n_row+1) (n_col+1) mat2))
     in
+    (* Copies the matrix *)
     let ((n,p),m) = mat in
     let (dim,mat_cp) = empty n p in
     for i = 0 to n - 1 do
