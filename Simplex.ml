@@ -1,4 +1,4 @@
-(* PROJECT: OCaml Matrix/Simplex
+(* PROJECT: OCaml Matrix Library/Simplex
  *
  * NAMES:
  *
@@ -17,26 +17,20 @@
  * Github Organization name: Fantastic-four
  *
  * Github Project URL: github.com/Fantastic-four/ocaml-matrix
+ * SEAS Project URL: code.seas.harvard.edu/ocaml-matrix/ocaml-matrix
+ * Video URL: 
  *)
 
-(* module type SIMPLEX =
+module type SIMPLEX =
 sig
 
   type elt
 
-  type linear_equation
-  
-  type constraint 
-
-	(*val pivot : matrix -> matrix *)
-
-  val constraint_from_string : string -> constraint 
-
 end 
+
+(* module Simplex: SIMPLEX =
+struct
+	
+
+end
 *)
-
-
-
-
- 
-

@@ -1,123 +1,28 @@
 open Order
-open Elts
 
 exception TODO
 
-module type MATRIX =
-sig
-
-  exception NonSquare
-  exception ImproperDimensions
-
-  type elt
-
-  type matrix
-
-  (* Type of this is unknown, but will probably be represented using Ocaml's
-   * built-in Arrays *)
-
-  (* empty matrix *)
-  val empty : int -> int -> matrix
-
-  (* Takes a list of lists and converts that to a matrix *)
-  val from_list : (elt list list) -> matrix
-
-  (* Will implement using nested match statements *)
-
-  (* Scales every element in the matrix by another elt *)
-  val scale : matrix -> elt -> matrix
-
-  (* Will implement by iterating through the matrix and scaling each element *)
-
-  (* Adds two matrices. They must have the same dimensions *)
-  val add : matrix -> matrix -> matrix
-
-  (* Will add the elements elementwise and construct a new matrix *)
-
-  (* Multiplies two matrices. If the matrices have dimensions m x n and p x q, n
-   * and p must be equal, and the resulting matrix will have dimension m x q *)
-  val mult: matrix -> matrix -> matrix
-
-  (* Will take the dot product of the nth row of the first matrix and the jth
-   * column of the second matrix to create the n,j th entry of the resultant *)
-
-  (* Returns the row reduced form of a matrix *)
-  val row_reduce: matrix -> matrix
-  (* We will implement the algorithm found in the link above *)
-
-  (* This part will not be used since it is not essential to the simplex
-   * algorithm. We will implement it if we have time. *)
-  (*
-  (* Returns the inverse of a matrix *)
-    
-  val inverse: matrix -> matrix
-    
-  (* Will implement this based on the specification in the Algorithms book *)
-
-  (* Returns the norm of the matrix *)
-
-    val norm: matrix -> elt
-  *)
-  (*Transposes a matrix. If the input has dimensions m x n, the output will
-   * have dimensions n x m *)
-
-  val transpose: matrix -> matrix
-
-
-  (* Will basically ``flip'' the indices of the input matrix *)
-
-  (* Returns the trace of the matrix *)
-
-  val trace: matrix -> elt list
-
-  (*
-  (* Will check if the matrix is square, then sum up all the elements along its
-   * diagonal *)
-
-  (* Returns the determinant of the matrix *)
-  
-  val det: matrix -> elt
-
-  (* Will implement this algorithm based on a description in Hubbard. Involves
-   * column reducing the input (or row-reducing the transpose) and then keeping
-   * track of the operations to build a sequence of coefficients to multiply *)
-
-  (* Returns a list of eigenvalues and eigenvectors of a matrix *)
-
-  val eigen: matrix -> (elt *matrix) list option
-
-  (* Calculates successive powers of the input matrix, each multiplied by the
-   * same basis vector. Generates a polynomial and solves for zeros, which
-   * yields eigenvalues. Repeat for all basis vectors *)
-
-  (* Takes a string and builds a matrix from it *)
-    
-  val from_string : string -> matrix
-    
-  (* We will have some way to express matrices using strings, and then we will
-    * parse the string to give the matrix *)
-  *)
-    
-  (* Prints out the contents of a matrix *)
-  val print : matrix -> unit
-
-  (* Iterate through the matrix and print each element *)
-end
-
-module Matrix (C: ORDERED_AND_OPERATIONAL) : (MATRIX with type elt = C.t) =
+module Matrix (C: Elts.ORDERED_AND_OPERATIONAL) : (MatrixI.MATRIX with type elt = C.t) =
 struct
 
+  (*************** Exceptions ***************)
+  
   exception NonSquare
   exception ImproperDimensions
+
+  (*************** End Exceptions ***************)
   
+  (*************** Types ***************)
+
   type elt = C.t
   
   (* A matrix is a pair of dimension (n x p) and a array of arrays
    * the first array is the row (n) and the second the column (p) *)
   type matrix = (int * int) * (elt array array) 
 
-  (* Type of this is unknown, but will probably be represented using Ocaml's
-   * built-in Arrays *)
+  (*************** End Types ***************)
+
+  (*************** Base Functions ***************)
 
   (* catching negative dimensions AND 0 dimensions and too large 
    * of a dimension so we don't have to worry about it later *)
@@ -130,7 +35,9 @@ struct
     else (* dimension is negative or 0 *)
       raise ImproperDimensions
 
-  (** Helper Functions Section **)
+  (*************** End Base Functions ***************)
+
+  (*************** Helper Functions ***************)
 
   (* get's the nth row of a matrix and returns (r, row) where r is the length
    * of the row and row is a COPY of the original row. For example, calling
@@ -205,10 +112,7 @@ struct
   let iteri (f: int -> int -> 'a -> unit) ((dim,m): matrix) : unit =
     Array.iteri (fun i row -> Array.iteri (fun j e -> f (i+1) (j+1) e) row) m 
 
-  (* folds over each row using base case u and function f, 
-   * creating a new array with the results. Then it folds over that
-   * array with function g and base case v, returning a v.
-   *)
+  (* folds over each row using base case u and function f *)
   (* could be a bit more efficient? *)
   let reduce (f: 'a -> 'b -> 'a) (u: 'a) (((p,q),m): matrix) : 'b =
     let total = ref u in
@@ -227,6 +131,8 @@ struct
    * Otherwise, the arrays were the wrong size and raises ImproperDimension
 
     THE ABOVE COMMENT HAS NOT BEEN IMPLEMENTED 
+
+    Instead we calculate the length before starting
    *)
   let dot (v1: elt array) (v2: elt array) : elt =
     let rec dotting (i: int) (total: elt) : elt =
@@ -238,31 +144,30 @@ struct
     if len1 = len2 then dotting len1 C.zero
     else raise ImproperDimensions
     
-  (** End Helper Functions **)
-      
-  let scale (m: matrix) (sc: elt) : matrix = map (C.multiply sc) m
+  (*************** End Helper Functions ***************)
 
-  (* Will implement by iterating through the matrix and scaling each element *)
+
+  (*************** Primary Matrix Functions ***************)
+      
+  (* scales a matrix by the appropriate factor *)
+  let scale (m: matrix) (sc: elt) : matrix = map (C.multiply sc) m
 
   (* This takes in a list of lists. The inners lists are the rows *)
   let from_list (lsts : elt list list) : matrix = 
     let rec check_length (length: int) (lst: elt list) : int =
       if List.length lst = length then length
-      else raise (Failure "Rows are not all the same length!") in 
+      else raise ImproperDimensions in 
     let p = List.length lsts in
     match lsts with
-    | [] -> empty 1 1
+    | [] -> raise ImproperDimensions
     | hd::tl -> 
       let len = List.length hd in
       if List.fold_left check_length len tl = len then
         ((p,len),Array.map Array.of_list (Array.of_list lsts))
       else
-        raise (Failure "Rows are not all the same length")
-
-
+        raise ImproperDimensions
 
   (* Adds two matrices. They must have the same dimensions *)
-
   let add ((dim1,m1): matrix) ((dim2,m2): matrix) : matrix =
     if dim1 = dim2 then
       let n, p = dim1 in
@@ -275,13 +180,10 @@ struct
       (dim',sum_m)
     else
       raise ImproperDimensions
-    
-
-  (* Will add the elements elementwise and construct a new matrix *)
+  
 
   (* Multiplies two matrices. If the matrices have dimensions m x n and p x q, n
    * and p must be equal, and the resulting matrix will have dimension n x q *)
-
   let mult (matrix1: matrix) (matrix2: matrix) : matrix =  
     let ((m,n),m1), ((p,q),m2) = matrix1, matrix2 in
     if n = p then
@@ -295,12 +197,9 @@ struct
       (dim,result)
     else
       raise ImproperDimensions
-          
-  (* Will take the dot product of the nth row of the first matrix and the jth
-   * column of the second matrix to create the n,j th entry of the resultant *)
 
   (* Returns the row reduced form of a matrix *)
-  (** Helper functions for row_reduce **)
+  (*************** Helper Functions for Row Reduce ***************)
 
   (* returns the index of the first non-zero elt in an array*)
   let zero (arr: elt array) : int option =
@@ -353,7 +252,6 @@ struct
    * 0-indexed. If two elements are both the maximum value, returns the one with
    * the lowest index. Returns None if this element is zero (if column is all 0)
    * *)
-
   let find_max_col_index (array1: elt array) : int option = 
     (* Compares two elements in an elt array and returns the greater and its
      * index *)
@@ -408,6 +306,9 @@ struct
       row1.(i) <- C.subtract row1.(i) (C.multiply sc row2.(i))
     done;;
 
+  (*************** End Helper Functions for Row Reduce ***************)
+
+  (* row reduces a matrix *)
   let row_reduce (mat: matrix) : matrix =
     let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
       (* Matrices are 1-indexed *)
@@ -437,6 +338,7 @@ struct
     done;
     let _ = row_reduce_h 1 1 (dim,mat_cp) in (dim,mat_cp)
 
+   (* Pretty prints a matrix: mostly used for testing *)
    let print (m: matrix) : unit =
     let ((row,col), m') = m in
     let pretty_print (_: int) (j: int) (e: elt) =
@@ -450,8 +352,10 @@ struct
       else () in
     iteri pretty_print m
 
+  (*************** End Main Functions ***************)
 
-  (** Optional module functions **)
+
+  (*************** Optional module functions ***************)
 
   (* calculates the trace of a matrix and returns it as an elt list *)
   let trace (((n,p),m): matrix) : elt list =
@@ -473,8 +377,57 @@ struct
     done;
     assert(dim = (p,n));
     ((p,n),m')
-end
 
+  (* returns the inverse of a matrix. Uses a pretty simple algorithm *)
+  let inverse (mat: matrix) : matrix =
+    let ((n,p),m) = mat in
+    if n = p then
+      (* create a new matrix with twice the number of columns *)
+      let augmented = empty n (2*n) in
+      for i = 1 to n do
+        let (dim,col) = get_column mat i in
+        let _ = assert(dim = n) in
+        let _ = set_column augmented i col in
+        ()
+      done;
+      let augmented' = row_reduce augmented in
+      (* create the inverted matrix and fill in with appropriate values *)
+      let inverse = empty n n in
+      for i = n + 1 to 2*n do
+        let (dim, col) = get_column augmented' i in
+        let _ = assert(dim = n) in
+        let _ = set_column inverse i col in
+        ()
+      done;
+      inverse
+    else
+      raise NonSquare
+
+  (* following our invarient, converts a string into a matrix *)
+  let from_string (s: string) : matrix =
+    let convert (row: string) : elt list =
+      let chars = Helpers.explode row "," in
+      List.map C.from_string chars in
+    let rows = Helpers.explode s "|" in
+    let char_list = List.map convert rows in
+    from_list char_list
+
+  (*************** Optional module functions ***************)
+
+  (*************** Tests ***************)
+
+  (*************** Testing Helper Functions ***************)
+
+  (*************** End Testing Helper Functions ***************)
+
+  (*************** Testing Main Functions ***************)
+
+  (*************** End Testing Main Functions ***************)
+
+  let run_tests () = ()
+
+end
+(*
 module FloatMatrix = Matrix(Floats) ;;
 let a = Floats.generate () in
 let b = Floats.generate_gt a () in
@@ -482,3 +435,4 @@ let c = Floats.generate_gt b () in
 let d = Floats.generate_gt c () in
 let test = FloatMatrix.from_list [[a;b];[c;d]] in
 FloatMatrix.print test;;
+*)
