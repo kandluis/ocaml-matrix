@@ -414,7 +414,7 @@ struct
   let row_reduce (mat: matrix) : matrix =
     let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
       let ((num_row, num_col), arr) = mat2 in
-      if (num_row < n_row) && (num_col < n_col) then ()
+      if (n_col = num_col+1) && (n_row = num_row+1) then ()
       else
         (let (_,col) = get_column mat2 n_col in
         match find_max_col_index col with
