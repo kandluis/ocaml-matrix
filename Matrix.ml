@@ -78,24 +78,30 @@ struct
    *)
   let set_row (((n,p),m): matrix) (row: int) (a: elt array) : unit =
     if row <= n then 
+    begin
+      assert(Array.length a = p);
       for i = 0 to n - 1 do
         m.(row - 1).(i) <- a.(i)
-      done
+      done;
+    end
     else
       raise (Failure "Row out of bounds.")
 
   (* Similar to set_row but sets the nth column instead *)
   let set_column (((n,p),m): matrix) (column: int) (a: elt array) : unit =
     if column <= p then
+    begin
+      assert(Array.length a = n);
       for i = 0 to n - 1 do
         m.(i).(column - 1) <- a.(i)
-      done
+      done; 
+    end
     else
       raise (Failure "Column out of bounds.")
 
   (* returns the ij-th element of a matrix (not-zero indexed) *)
   let get_elt (((n,p),m): matrix) ((i,j): int*int) : elt =
-    if i <= n && p <= j then
+    if i <= n && j <= p then
       m.(i - 1).(j - 1)
     else 
       raise ImproperDimensions
@@ -326,7 +332,7 @@ struct
           (* if index <> n_row then swap_row mat2 index n_row; *)
           (swap_row mat2 index n_row; 
           let pivot = get_elt mat2 (n_row, n_col) in
-          scale_row mat2 (n_row+1) (C.divide C.one pivot);
+          scale_row mat2 (n_row) (C.divide C.one pivot);
           for i = 1 to num_row do
             if i <> n_row then sub_mult mat2 i n_row (get_elt mat2 (i,n_col))
           done;
@@ -442,7 +448,9 @@ struct
     let rec test_from_0 (index: int) (n: elt) (((x,y),m): matrix) : unit =
       if times = index then ()
       else
-        let (extra,m') = map (C.add n) ((x,y),m) in
+        let ((x',y'),m') = map (C.add n) ((x,y),m) in
+        assert(x' = x);
+        assert(y' = y);
         for i = 1 to x do
           for j = 1 to y do
             let elt = C.add n m.(i-1).(j-1) in
@@ -451,7 +459,7 @@ struct
             | _ -> print_loc i j
           done;
         done;
-        test_from_0 (index + 1) (C.add n C.one) (extra,m') in
+        test_from_0 (index + 1) (C.add n C.one) ((x',y'),m') in
     let dimx, dimy = Random.int times + 1, Random.int times + 1 in
     let m = empty dimx dimy in
     test_from_0 0 C.zero m 
@@ -480,16 +488,32 @@ struct
       let dimx, dimy = Random.int times + 1, Random.int times + 1 in
       let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) 
         (empty dimx dimy) in
-      for i = 1 to dimy do
-        let (dim,column) = get_column (extra, t_mat) i in
+      for j = 1 to dimy do
+        let (dim,column) = get_column (extra, t_mat) j in
         assert(dim = dimx);
-        for j = 1 to dimx do
-          match C.compare t_mat.(i-1).(j-1) column.(j-1) with
+        for i = 1 to dimx do
+          match C.compare t_mat.(i-1).(j-1) column.(i-1) with
           | Equal -> ()
           | _ -> print_loc i j
         done;
       done;
       test_get_column (times - 1)
+
+  let rec test_get_elt (times: int): unit =
+    if times = 0 then ()
+    else
+      let dimx, dimy = Random.int times + 1, Random.int times + 1 in
+      let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) 
+        (empty dimx dimy) in
+      for i = 1 to dimx do
+        for j = 1 to dimy do
+          let elt = get_elt (extra, t_mat) (i,j) in
+          match C.compare elt t_mat.(i-1).(j-1) with
+          | Equal -> ()
+          | _ -> print_loc i j
+        done;
+      done;
+      test_get_row (times - 1)
 
   (*************** Testing Helper Functions ***************)
 
@@ -502,8 +526,9 @@ struct
   let run_tests times = 
     test_empty times;
     test_map times;
-    (*test_get_row times;
-    test_get_column times;*)
+    test_get_row times;
+    test_get_column times;
+    test_get_elt times;
     ()
 
 end
@@ -513,7 +538,7 @@ module FloatMatrix = Matrix(Floats)
 let _ = FloatMatrix.run_tests 10 ;;
 
 
-(*let a = Floats.generate ();;
+let a = Floats.generate ();;
 let b = Floats.generate_gt a ();;
 let c = Floats.generate_gt b ();;
 let d = Floats.generate_gt c ();;
@@ -529,5 +554,5 @@ match FloatMatrix.find_max_col_index test3 with
 
 let test1_reduced = FloatMatrix.row_reduce test1;;
 FloatMatrix.print test1_reduced;;
-*)
+
 
