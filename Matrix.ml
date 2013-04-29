@@ -429,7 +429,7 @@ end
 
 module FloatMatrix = Matrix(Floats)
 
-let a = Floats.generate ();;
+(*let a = Floats.generate ();;
 let b = Floats.generate_gt a ();;
 let c = Floats.generate_gt b ();;
 let d = Floats.generate_gt c ();;
@@ -447,4 +447,4 @@ match FloatMatrix.find_max_col_index test3 with
 
 let test1_reduced = FloatMatrix.row_reduce test1;;
 FloatMatrix.print test1_reduced;;
-
+*)

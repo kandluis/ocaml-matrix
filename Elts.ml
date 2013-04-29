@@ -74,7 +74,7 @@ struct
 
   let divide = (/.) 
 
-  let print a = print_string (string_of_float a)
+  let print a = print_string (to_string a)
 
   let generate () = 3. 
 
