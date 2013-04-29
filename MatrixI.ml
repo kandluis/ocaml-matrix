@@ -43,6 +43,9 @@ sig
   (* Returns the trace of the matrix *)
   val trace: matrix -> elt list
 
+  (* For testing only *)
+  val find_max_col_index: elt array -> int option 
+
   (*
   (* Returns the determinant of the matrix *)
   

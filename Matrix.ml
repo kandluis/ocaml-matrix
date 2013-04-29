@@ -1,4 +1,5 @@
 open Order
+open Elts
 
 exception TODO
 
@@ -251,7 +252,7 @@ struct
   (* Finds the element with the greatest absolute value in a column. Is not 
    * 0-indexed. If two elements are both the maximum value, returns the one with
    * the lowest index. Returns None if this element is zero (if column is all 0)
-   * *)
+   *)
   let find_max_col_index (array1: elt array) : int option = 
     (* Compares two elements in an elt array and returns the greater and its
      * index *)
@@ -265,7 +266,7 @@ struct
     (* Helper function *) 
     let rec find_index (max_index: int) (curr_max: elt) (curr_index: int) 
         (arr: elt array) = 
-      if curr_index > Array.length arr then 
+      if curr_index = Array.length arr then 
         (if curr_max = C.zero then None
         else Some (max_index+1)) (* Arrays are 0-indexed but matrices aren't *)
       else
@@ -311,23 +312,21 @@ struct
   (* row reduces a matrix *)
   let row_reduce (mat: matrix) : matrix =
     let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
-      (* Matrices are 1-indexed *)
       let ((num_row, num_col), arr) = mat2 in
-      if (num_row = n_row) && (num_col = n_col) then ()
+      if (num_row < n_row) && (num_col < n_col) then ()
       else
         (let (_,col) = get_column mat2 n_col in
         match find_max_col_index col with
         | None (* Column all 0s *) -> row_reduce_h (n_row+1) (n_col+1) mat2 
         | Some index -> 
-          (* (if index <> n_row then swap_row mat2 index n_row; (* (let _ =
-          swap_row mat2 index n_row in) *) *)
-          swap_row mat2 index n_row; 
+          (* if index <> n_row then swap_row mat2 index n_row; *)
+          (swap_row mat2 index n_row; 
           let pivot = get_elt mat2 (n_row, n_col) in
-          let _ = scale_row mat2 (n_row+1) (C.divide C.one pivot) in
+          scale_row mat2 (n_row+1) (C.divide C.one pivot);
           for i = 1 to num_row do
             if i <> n_row then sub_mult mat2 i n_row (get_elt mat2 (i,n_col))
           done;
-          row_reduce_h (n_row+1) (n_col+1) mat2)
+          row_reduce_h (n_row+1) (n_col+1) mat2))
     in
     let ((n,p),m) = mat in
     let (dim,mat_cp) = empty n p in
@@ -427,12 +426,25 @@ struct
   let run_tests () = ()
 
 end
-(*
-module FloatMatrix = Matrix(Floats) ;;
-let a = Floats.generate () in
-let b = Floats.generate_gt a () in
-let c = Floats.generate_gt b () in
-let d = Floats.generate_gt c () in
-let test = FloatMatrix.from_list [[a;b];[c;d]] in
-FloatMatrix.print test;;
-*)
+
+module FloatMatrix = Matrix(Floats)
+
+let a = Floats.generate ();;
+let b = Floats.generate_gt a ();;
+let c = Floats.generate_gt b ();;
+let d = Floats.generate_gt c ();;
+let test1 = FloatMatrix.from_list [[a;b];[c;d]];;
+FloatMatrix.print test1;;
+
+let test2 = FloatMatrix.from_list[[a;a];[c;c]];;
+let test12 = FloatMatrix.add test1 test2;;
+FloatMatrix.print test12;;
+let test3 = Array.make 2 a;;
+match FloatMatrix.find_max_col_index test3 with
+| None -> print_string ("None")
+| Some index -> print_string (string_of_int index)
+;;
+
+let test1_reduced = FloatMatrix.row_reduce test1;;
+FloatMatrix.print test1_reduced;;
+
