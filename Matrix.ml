@@ -3,7 +3,7 @@ open Elts
 
 exception TODO
 
-module Matrix (C: Elts.ORDERED_AND_OPERATIONAL) : (MatrixI.MATRIX with type elt = C.t) =
+module Matrix (C: EltsI.ORDERED_AND_OPERATIONAL) : (MatrixI.MATRIX with type elt = C.t) =
 struct
 
   (*************** Exceptions ***************)
@@ -436,6 +436,25 @@ struct
       done;
       test_empty (times - 1)
 
+  let rec test_map (times: int) : unit =
+    let rec test_from_0 (index: int) (n: elt) (((x,y),m): matrix) : unit =
+      if times = index then ()
+      else
+        let (extra,m') = map (C.add n) ((x,y),m) in
+        for i = 1 to x do
+          for j = 1 to y do
+            let elt = C.add n m.(i-1).(j-1) in
+            match C.compare elt m'.(i-1).(j-1) with
+            | Equal -> ()
+            | _ -> print_loc i j
+          done;
+        done;
+        test_from_0 (index + 1) (C.add n C.one) (extra,m') in
+    let dimx, dimy = Random.int times + 1, Random.int times + 1 in
+    let m = empty dimx dimy in
+    test_from_0 0 C.zero m 
+
+
   let rec test_get_row (times: int): unit =
     if times = 0 then ()
     else
@@ -444,13 +463,29 @@ struct
       for i = 1 to dimx do
         let (dim,row) = get_row (extra, t_mat) i in
         assert(dim = dimy);
-        for j = 1 to dimx do
+        for j = 1 to dimy do
           match C.compare t_mat.(i-1).(j-1) row.(j-1) with
           | Equal -> ()
           | _ -> print_loc i j
         done;
       done;
       test_get_row (times - 1)
+
+  let rec test_get_column (times: int): unit =
+    if times = 0 then ()
+    else
+      let dimx, dimy = Random.int times + 1, Random.int times + 1 in
+      let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) (empty dimx dimy) in
+      for i = 1 to dimy do
+        let (dim,column) = get_column (extra, t_mat) i in
+        assert(dim = dimx);
+        for j = 1 to dimx do
+          match C.compare t_mat.(i-1).(j-1) column.(j-1) with
+          | Equal -> ()
+          | _ -> print_loc i j
+        done;
+      done;
+      test_get_column (times - 1)
 
   (*************** Testing Helper Functions ***************)
 
@@ -462,17 +497,19 @@ struct
 
   let run_tests times = 
     test_empty times;
-    (*test_get_row times;*)
+    test_map times;
+    (*test_get_row times;
+    test_get_column times;*)
     ()
 
 end
 
 module FloatMatrix = Matrix(Floats)
 
-let _ = FloatMatrix.run_tests 1 ;;
+let _ = FloatMatrix.run_tests 10 ;;
 
-(*
-let a = Floats.generate ();;
+
+(*let a = Floats.generate ();;
 let b = Floats.generate_gt a ();;
 let c = Floats.generate_gt b ();;
 let d = Floats.generate_gt c ();;

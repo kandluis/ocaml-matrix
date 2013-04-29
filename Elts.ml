@@ -1,54 +1,4 @@
-module type ORDERED_AND_OPERATIONAL =
-sig
-  type t
-
-  val zero : t
-
-  val one: t
-
-  val compare : t -> t -> Order.order
-
-
-  (* Converts a t to a string *)
-  val to_string : t -> string
-
-  val from_string : string -> t
-
-
-  val add: t -> t -> t
-
-  val subtract: t -> t -> t
-
-  val multiply: t -> t -> t
-
-  val divide: t -> t -> t
-
-
-  (* For testing *)
-  (* Prints a t *)
-  val print: t -> unit
-
-  (* Generates the same t each time when called *)
-  val generate: unit -> t
-
-  (* Generates a t greater than the argument passed in *)
-  val generate_gt: t -> unit -> t
-  
-  (* Generates a t less than the argument passed in *)
-  val generate_lt: t -> unit -> t
-
-  (* Generates a t in between the two arguments. Returns none if none exist *)
-  val generate_between: t -> t -> unit -> t option
-
-  (* Special test function specifically for float*)
-  val generate_x: float -> unit -> t 
-
-  (* Specfial funtion to tests *)
-  val generate_random : float -> unit -> t
-  
-end
-
-module Floats : ORDERED_AND_OPERATIONAL =
+module Floats : EltsI.ORDERED_AND_OPERATIONAL =
 struct
 
   type t = float
@@ -98,4 +48,21 @@ struct
   let generate_random bound () =
     let x = Random.float bound in
     x -. mod_float x epsilon
+
+  (************************ TESTS ********************************)  
+
+  let rec test_compare (times:int) : unit =
+    let random t = float_of_int (Random.int t - Random.int t) in
+    if times = 0 then ()
+    else
+      let x, y = random times, random times in
+      match compare x y with
+      | Order.Equal -> assert(x = y)
+      | Order.Greater -> assert(x > y)
+      | Order.Less -> assert(x < y)
+
+
+  let run_tests (times: int) : unit =
+    test_compare times ;
+    ()
 end
