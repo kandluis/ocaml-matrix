@@ -285,11 +285,13 @@ struct
     find_index 0 C.zero 0 array1
 
   (* Basic row operations *)
+  (* Scales a row by sc *)
   let scale_row (m: matrix) (num: int) (sc: elt) : unit = 
     let (len, row) = get_row m num in 
     let new_row = Array.map (fun a -> C.multiply sc a) row in
     set_row m num new_row
 
+  (* Swaps two rows of a matrix *)
   let swap_row (m: matrix) (r1: int) (r2: int) : unit =
     let (len1, row1) = get_row m r1 in
     let (len2, row2) = get_row m r2 in
@@ -313,7 +315,7 @@ struct
   let row_reduce (mat: matrix) : matrix =
     let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
       let ((num_row, num_col), arr) = mat2 in
-      if (num_row < n_row) && (num_col < n_col) then ()
+      if (n_col = num_col+1) && (n_row = num_row+1) then ()
       else
         (let (_,col) = get_column mat2 n_col in
         match find_max_col_index col with
@@ -328,6 +330,7 @@ struct
           done;
           row_reduce_h (n_row+1) (n_col+1) mat2))
     in
+    (* Copies the matrix *)
     let ((n,p),m) = mat in
     let (dim,mat_cp) = empty n p in
     for i = 0 to n - 1 do
@@ -427,24 +430,23 @@ struct
 
 end
 
-module FloatMatrix = Matrix(Floats)
+(*module FloatMatrix = Matrix(Floats)
 
-(*let a = Floats.generate ();;
+let a = Floats.generate ();;
 let b = Floats.generate_gt a ();;
 let c = Floats.generate_gt b ();;
 let d = Floats.generate_gt c ();;
 let test1 = FloatMatrix.from_list [[a;b];[c;d]];;
 FloatMatrix.print test1;;
 
-let test2 = FloatMatrix.from_list[[a;a];[c;c]];;
-let test12 = FloatMatrix.add test1 test2;;
-FloatMatrix.print test12;;
 let test3 = Array.make 2 a;;
 match FloatMatrix.find_max_col_index test3 with
 | None -> print_string ("None")
-| Some index -> print_string (string_of_int index)
+| Some index -> print_string (string_of_int index); print_string "\n"
 ;;
+
 
 let test1_reduced = FloatMatrix.row_reduce test1;;
 FloatMatrix.print test1_reduced;;
 *)
+
