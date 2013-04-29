@@ -3,7 +3,8 @@ open Elts
 
 exception TODO
 
-module Matrix (C: EltsI.ORDERED_AND_OPERATIONAL) : (MatrixI.MATRIX with type elt = C.t) =
+module Matrix (C: EltsI.ORDERED_AND_OPERATIONAL) : 
+  (MatrixI.MATRIX with type elt = C.t) =
 struct
 
   (*************** Exceptions ***************)
@@ -191,7 +192,8 @@ struct
       let (dim, result) = empty m q in
       for i = 0 to m - 1 do
         for j = 0 to q - 1 do
-          let (_,row), (_,column) = get_row matrix1 (i + 1), get_column matrix2 (j + 1) in
+          let (_,row), (_,column) = get_row matrix1 (i + 1), 
+            get_column matrix2 (j + 1) in
           result.(i).(j) <- dot row column
         done;
       done;
@@ -273,8 +275,8 @@ struct
         (match C.compare arr.(curr_index) C.zero with
         | Equal -> find_index max_index curr_max (curr_index+1) arr
         | Greater -> 
-          (let (el, index) = compare_helper (arr.(curr_index)) curr_max curr_index
-            max_index in
+          (let (el, index) = compare_helper (arr.(curr_index)) 
+            curr_max curr_index max_index in
           find_index index el (curr_index+1) arr)
         | Less -> 
           (let abs_curr_elt = C.subtract C.zero arr.(curr_index) in
@@ -459,7 +461,8 @@ struct
     if times = 0 then ()
     else
       let dimx, dimy = Random.int times + 1, Random.int times + 1 in
-      let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) (empty dimx dimy) in
+      let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) 
+        (empty dimx dimy) in
       for i = 1 to dimx do
         let (dim,row) = get_row (extra, t_mat) i in
         assert(dim = dimy);
@@ -475,7 +478,8 @@ struct
     if times = 0 then ()
     else
       let dimx, dimy = Random.int times + 1, Random.int times + 1 in
-      let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) (empty dimx dimy) in
+      let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) 
+        (empty dimx dimy) in
       for i = 1 to dimy do
         let (dim,column) = get_column (extra, t_mat) i in
         assert(dim = dimx);
