@@ -80,7 +80,7 @@ struct
     if row <= n then 
     begin
       assert(Array.length a = p);
-      for i = 0 to n - 1 do
+      for i = 0 to p - 1 do
         m.(row - 1).(i) <- a.(i)
       done;
     end
@@ -515,6 +515,44 @@ struct
       done;
       test_get_row (times - 1)
 
+  let rec test_set_row (times: int): unit =
+    if times = 0 then ()
+    else
+      let dimx, dimy = 2,1(*Random.int times + 1, Random.int times + 1*) in
+      let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) 
+        (empty dimx dimy) in
+      let rand_array = Array.map (fun _ -> C.generate_random (float times) ())
+        (Array.make dimy C.one) in
+      for i = 1 to dimx do
+        let _ = set_row (extra,t_mat) i rand_array in
+        for j = 1 to dimy do
+        ()
+          (*match C.compare C.print t_mat.(1).(j-1) rand_array.(j-1) with
+          | Equal -> ()
+          | _ -> print_loc i j*)
+        done;
+      done;
+      test_set_row (times - 1)
+
+
+  let rec test_set_column (times: int): unit =
+    if times = 0 then ()
+    else
+      let dimx, dimy = Random.int times + 1, Random.int times + 1 in
+      let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) 
+        (empty dimx dimy) in
+      let rand_array = Array.map (fun _ -> C.generate_random (float times) ())
+        (Array.make dimx C.one) in
+      for j = 1 to dimy do
+        let _ = set_column (extra,t_mat) j rand_array in
+        for i = 1 to dimx do
+          match C.compare t_mat.(i-1).(j-1) rand_array.(i-1) with
+          | Equal -> ()
+          | _ -> print_loc i j
+        done;
+      done;
+      test_set_row (times - 1)
+
   (*************** Testing Helper Functions ***************)
 
   (*************** End Testing Helper Functions ***************)
@@ -529,6 +567,8 @@ struct
     test_get_row times;
     test_get_column times;
     test_get_elt times;
+    test_set_row times;
+    test_set_column times;
     ()
 
 end
