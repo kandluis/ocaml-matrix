@@ -44,7 +44,7 @@ sig
   val trace: matrix -> elt list
 
   (* For testing only *)
-  val find_max_col_index: elt array -> int option 
+  val find_max_col_index: elt array -> int -> int option 
 
   (****** Used in the Simplex Algorithm Directly ******)
   (** All of the following functions will raise ImproperDimensions

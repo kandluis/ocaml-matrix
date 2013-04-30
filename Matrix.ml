@@ -261,7 +261,7 @@ struct
    * 0-indexed. If two elements are both the maximum value, returns the one with
    * the lowest index. Returns None if this element is zero (if column is all 0)
    *)
-  let find_max_col_index (array1: elt array) : int option = 
+  let find_max_col_index (array1: elt array) (start_index: int) : int option = 
     (* Compares two elements in an elt array and returns the greater and its
      * index *)
     let compare_helper (e1: elt) (e2: elt) (ind1: int) (ind2: int) : (elt*int) = 
@@ -290,13 +290,13 @@ struct
             max_index in
           find_index index el (curr_index+1) arr))
     in
-    find_index 0 C.zero 0 array1
+    find_index 0 C.zero (start_index -1) array1
 
   (* Basic row operations *)
   (* Scales a row by sc *)
   let scale_row (m: matrix) (num: int) (sc: elt) : unit = 
     let (len, row) = get_row m num in 
-    let new_row = Array.map (fun a -> C.multiply sc a) row in
+    let new_row = Array.map (C.multiply sc) row in
     set_row m num new_row
 
   (* Swaps two rows of a matrix *)
@@ -315,7 +315,8 @@ struct
     let _ = assert (len1 = len2) in
     for i = 0 to len1 - 1 do (* Arrays are 0-indexed *)
       row1.(i) <- C.subtract row1.(i) (C.multiply sc row2.(i))
-    done;;
+    done;
+    set_row m r1 row1 
 
   (*************** End Helper Functions for Row Reduce ***************)
 
@@ -323,20 +324,22 @@ struct
   let row_reduce (mat: matrix) : matrix =
     let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
       let ((num_row, num_col), arr) = mat2 in
-      if (n_col = num_col+1) && (n_row = num_row+1) then ()
+      if (n_col = num_row + 1) then ()
       else
-        (let (_,col) = get_column mat2 n_col in
-        match find_max_col_index col with
-        | None (* Column all 0s *) -> row_reduce_h (n_row+1) (n_col+1) mat2 
+        let (_,col) = get_column mat2 n_col in
+        match find_max_col_index col n_row with
+        | None (* Column all 0s *) -> row_reduce_h n_row (n_col+1) mat2 
         | Some index -> 
           (* if index <> n_row then swap_row mat2 index n_row; *)
-          (swap_row mat2 index n_row; 
-          let pivot = get_elt mat2 (n_row, n_col) in
-          scale_row mat2 (n_row) (C.divide C.one pivot);
-          for i = 1 to num_row do
-            if i <> n_row then sub_mult mat2 i n_row (get_elt mat2 (i,n_col))
-          done;
-          row_reduce_h (n_row+1) (n_col+1) mat2))
+          begin
+            swap_row mat2 index n_row;
+            let pivot = get_elt mat2 (n_row, n_col) in
+            scale_row mat2 (n_row) (C.divide C.one pivot);
+            for i = 1 to num_row do
+              if i <> n_row then sub_mult mat2 i n_row (get_elt mat2 (i,n_col))
+            done;
+            row_reduce_h (n_row+1) (n_col+1) mat2
+          end
     in
     (* Copies the matrix *)
     let ((n,p),m) = mat in
@@ -403,8 +406,8 @@ struct
       let augmented' = row_reduce augmented in
       (* create the inverted matrix and fill in with appropriate values *)
       let inverse = empty n n in
-      for i = n + 1 to 2*n do
-        let (dim, col) = get_column augmented' i in
+      for i = 1 to n do
+        let (dim, col) = get_column augmented' (n + i) in
         let _ = assert(dim = n) in
         let _ = set_column inverse i col in
         ()
@@ -553,6 +556,16 @@ struct
       done;
       test_set_row (times - 1)
 
+  let rec test_reduce (times: int) : unit =
+    if times = 0 then ()
+    else
+      let dimx, dimy = Random.int times + 1, Random.int times + 1 in
+      let t_mat = map (C.add C.one) (empty dimx dimy) in
+      let result = reduce C.add C.zero t_mat in
+      let e_result = C.generate_x (float (dimx * dimy)) () in
+      assert(e_result = result);
+      test_reduce (times - 1)
+
   (*************** Testing Helper Functions ***************)
 
   (*************** End Testing Helper Functions ***************)
@@ -569,30 +582,41 @@ struct
     test_get_elt times;
     test_set_row times;
     test_set_column times;
+    test_reduce times;
     ()
 
 end
 
 module FloatMatrix = Matrix(Floats)
 
-let _ = FloatMatrix.run_tests 10 ;;
+let _ = FloatMatrix.run_tests 20 ;;
 
 
 let a = Floats.generate ();;
 let b = Floats.generate_gt a ();;
 let c = Floats.generate_gt b ();;
 let d = Floats.generate_gt c ();;
-let test1 = FloatMatrix.from_list [[a;b];[c;d]];;
+let e = Floats.generate_gt d ();;
+let f = Floats.generate_gt e ();;
+let test1 = FloatMatrix.from_list [[a;b;c];[d;e;f]];;
 FloatMatrix.print test1;;
+let test2 = FloatMatrix.from_list [[a;a];[a;a]];;
+FloatMatrix.print test2;;
+let test3 = FloatMatrix.from_list [[Floats.zero;a];[Floats.zero;b]];;
+FloatMatrix.print test3;;
+let test4 = FloatMatrix.from_list [[a;b];[c;d]];;
+FloatMatrix.print test4;;
 
-let test3 = Array.make 2 a;;
-match FloatMatrix.find_max_col_index test3 with
-| None -> print_string ("None")
-| Some index -> print_string (string_of_int index); print_string "\n"
-;;
-
-
-let test1_reduced = FloatMatrix.row_reduce test1;;
-FloatMatrix.print test1_reduced;;
+(*let test2 = FloatMatrix.from_list [[a;b];[e;f]];;
+FloatMatrix.print (FloatMatrix.inverse test2);;
+*)
+let reduced = FloatMatrix.row_reduce test1 in
+FloatMatrix.print reduced;;
+let reduced = FloatMatrix.row_reduce test2 in
+FloatMatrix.print reduced;;
+let reduced = FloatMatrix.row_reduce test3 in
+FloatMatrix.print reduced;;
+let inverse = FloatMatrix.inverse test4 in
+FloatMatrix.print inverse;;
 
 
