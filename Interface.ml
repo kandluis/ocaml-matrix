@@ -10,6 +10,7 @@ module FloatMatrix : (MATRIX with type elt = Floats.t) =
 (* Testing the Matrix Library *)
 let test times = 
   let _ = FloatMatrix.run_tests times in
+  let _ = Floats.run_tests times in
   print_string "If no erros, then all tests passed!\n"
 
 (* Creating the Simplex specific Module *)
