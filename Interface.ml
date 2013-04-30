@@ -4,27 +4,18 @@ open MatrixI
 open Simplex
 
 (* Creating the Matrix Library module! *)
-module FloatMatrix : (MATRIX with type elt = Floats.t) =
-  MakeMatrix(Floats)
+module EltMatrix : (MATRIX with type elt = Elts.t) =
+  MakeMatrix(Elts)
+
+(* Creating the Simplex specific Module *)
+module EltSimplex : SIMPLEX = 
+  Simplex(Elts)  
 
 (* Testing the Matrix Library *)
 let test times = 
-  let _ = FloatMatrix.run_tests times in
-  let _ = Floats.run_tests times in
-  print_string "If no erros, then all tests passed!\n"
-
-(* Creating the Simplex specific Module *)
-module FloatSimplex : SIMPLEX = 
-  Simplex(Floats)  
-
-
-let rec read_data (chan: in_channel) : Floats.t list list =  
-  try
-    let row = input_line chan in
-    let chars = Helpers.explode row "," in
-    (List.map Floats.from_string chars)::read_data chan
-  with End_of_file -> []
-;;
+  let _ = EltMatrix.run_tests times in
+  let _ = Elts.run_tests times in
+  print_string "If no errors above, then all tests passed!\n"
 
 (* Parse command-line arguments. Parses filename *)
 let parse_args () : unit =
@@ -41,13 +32,14 @@ let parse_args () : unit =
       test times
     with
       | Failure s -> usage s)
-  | "load"->  
+  | "solve"-> 
     (try 
       let filename =  Sys.argv.(2) in
-      let inchan = open_in filename in 
-      let m_list = read_data inchan in
-      let matrix = FloatMatrix.from_list m_list in
-      (* do simplex stuff here and print *) FloatMatrix.print matrix
+      let inchan = open_in filename in
+      let m = EltSimplex.load inchan in
+      (match EltSimplex.solve m with
+        | None -> (print_string "No solution exists for:\n"; EltSimplex.print m)
+        | Some sol -> (print_string "Solution: "; EltSimplex.print_elt sol)) 
     with
       | Sys_error e -> usage e)
   | _ -> usage "Incorrect inputs."

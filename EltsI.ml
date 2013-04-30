@@ -43,7 +43,7 @@ sig
   (* Special test function specifically for float*)
   val generate_x: float -> unit -> t 
 
-  (* Specfial funtion to tests *)
+  (* Specfial funtion to test *)
   val generate_random : float -> unit -> t
 
   val run_tests : int -> unit

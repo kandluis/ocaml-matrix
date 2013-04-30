@@ -4,44 +4,20 @@ sig
   exception NonSquare
   exception ImproperDimensions
 
+  (******** TYPES ********)
   type elt
 
   type matrix
 
-  (* empty matrix *)
+  (* empty matrix of nxp dimensions *)
   val empty : int -> int -> matrix
 
   (* Takes a list of lists and converts that to a matrix *)
   val from_list : (elt list list) -> matrix
 
-  (* Scales every element in the matrix by another elt *)
-  val scale : matrix -> elt -> matrix
-
-  (* Adds two matrices. They must have the same dimensions *)
-  val add : matrix -> matrix -> matrix
-
-  (* Multiplies two matrices. If the matrices have dimensions m x n and p x q, n
-   * and p must be equal, and the resulting matrix will have dimension m x q *)
-  val mult: matrix -> matrix -> matrix
-
-  (* Returns the row reduced form of a matrix *)
-  val row_reduce: matrix -> matrix
-  (* We will implement the algorithm found in the link above *)
-
-  (* Returns the inverse of a matrix *) 
-  val inverse: matrix -> matrix
-    
-  (*
-  (* Returns the norm of the matrix *)
-  val norm: matrix -> elt
-  *)
-
-  (*Transposes a matrix. If the input has dimensions m x n, the output will
-   * have dimensions n x m *)
-  val transpose: matrix -> matrix
-
-  (* Returns the trace of the matrix *)
-  val trace: matrix -> elt 
+  (******** OPERATIONS ON ONE MATRIX ********)
+  (* Takes in a matrix and returns its dimensions. ie, nxp *)
+  val get_dimensions : matrix -> (int * int)
 
   (* get's the row of a matrix: Not zero-indexed. *)
   val get_row : matrix -> int -> (int * elt array)
@@ -58,9 +34,39 @@ sig
   (* gets the element at the specified index. *)
   val get_elt: matrix -> (int * int) -> elt 
 
-  (**** Other Library Functions ***)
+  (* Scales every element in the matrix by another elt *)
+  val scale : matrix -> elt -> matrix
+
+
+  (******** MORE ADVANCED SINGLE MATRIX OPERATIONS ********)
+  (* Returns the row reduced form of a matrix *)
+  val row_reduce: matrix -> matrix
+  (* We will implement the algorithm found in the link above *)
+
+  (* Returns the inverse of a matrix *) 
+  val inverse: matrix -> matrix
+    
+  (* Returns the norm of the matrix *)
+  val norm: matrix -> elt
+
+  (*Transposes a matrix. If the input has dimensions m x n, the output will
+   * have dimensions n x m *)
+  val transpose: matrix -> matrix
+
+  (* Returns the trace of the matrix *)
+  val trace: matrix -> elt 
+
   
-  (*
+  (******** OPERATIONS ON TWO MATRICES ********)
+  (* Adds two matrices. They must have the same dimensions *)
+  val add : matrix -> matrix -> matrix
+
+  (* Multiplies two matrices. If the matrices have dimensions m x n and p x q, n
+   * and p must be equal, and the resulting matrix will have dimension m x q *)
+  val mult: matrix -> matrix -> matrix
+
+  (**** Other Library Functions ***)
+
   (* Returns the determinant of the matrix *)
   
   val det: matrix -> elt
@@ -83,7 +89,6 @@ sig
     
   (* We will have some way to express matrices using strings, and then we will
     * parse the string to give the matrix *)
-  *)
     
   (* Prints out the contents of a matrix *)
   val print : matrix -> unit
@@ -100,17 +105,13 @@ sig
   exception NonSquare
   exception ImproperDimensions
 
+  (******** TYPES ********)
   type elt
 
   type matrix
 
-  (* For Simplex only only *)
-  val find_max_col_index: elt array -> int -> int option 
-
-  (****** Used in the Simplex Algorithm Directly ******)
-  (** All of the following functions will raise ImproperDimensions
-   * Exception if the matrix is not the right size for the operation 
-  **)
+  
+  (******** TYPICAL SINGLE MATRIX OPERATIONS ********)
   (* get's the row of a matrix: Not zero-indexed. *)
   val get_row : matrix -> int -> (int * elt array)
 
@@ -126,6 +127,15 @@ sig
   (* gets the element at the specified index. *)
   val get_elt: matrix -> (int * int) -> elt 
 
+  
+  (********** Specific for Simplex Algorithm ***********)
+  (** All of the following functions will raise ImproperDimensions
+   * Exception if the matrix is not the right size for the operation 
+  **)
+
+  (* Finds the index of the maximum element in an array *)
+  val find_max_col_index: elt array -> int -> int option 
+
   (* Scales a row *)
   val scale_row: matrix -> int -> elt -> unit
 
@@ -135,6 +145,9 @@ sig
   (* Subtracts a multiple of one row (the 2nd int) from another (the 1st int) *)
   val sub_mult: matrix -> int -> int -> elt -> unit
     
+  (* Takes a list of lists and converts that to a matrix *)
+  val from_list : (elt list list) -> matrix
+
   (* Prints out the contents of a matrix *)
   val print : matrix -> unit
 

@@ -58,7 +58,6 @@ struct
     else 
       raise (Failure "Row out of bounds.")
 
-  
   (* similar to get_row. For m, get_column m 1 will return (2, |1 2|) *)
   let get_column (((n,p),m): matrix) (column: int) : int * elt array =
     if column <= p then 
@@ -153,6 +152,10 @@ struct
     let len1, len2 = Array.length v1, Array.length v2 in
     if len1 = len2 then dotting len1 C.zero
     else raise ImproperDimensions
+
+  (* function to expose the dimensions of a matrix *)
+  let get_dimensions (m: matrix) : (int * int) =
+    let ((x,y),m') = m in (x,y)
     
   (*************** End Helper Functions ***************)
 
@@ -431,6 +434,21 @@ struct
     let char_list = List.map convert rows in
     from_list char_list
 
+  let det (m: matrix) : elt = raise TODO
+
+  (* Returns the norm of the matrix *)
+  let norm (m:matrix) : elt = raise TODO
+
+  (* Will implement this algorithm based on a description in Hubbard. Involves
+   * column reducing the input (or row-reducing the transpose) and then keeping
+   * track of the operations to build a sequence of coefficients to multiply *)
+
+  (* Returns a list of eigenvalues and eigenvectors of a matrix *)
+
+  let eigen (m:matrix) : (elt *matrix) list option =
+    raise TODO
+
+
   (*************** Optional module functions ***************)
 
   (*************** Tests ***************)
@@ -592,29 +610,29 @@ end
 (* Testing of the complete matrix module happens, then, in Interface.ml *)
 
 (*
-let a = Floats.generate ();;
-let b = Floats.generate_gt a ();;
-let c = Floats.generate_gt b ();;
-let d = Floats.generate_gt c ();;
-let e = Floats.generate_gt d ();;
-let f = Floats.generate_gt e ();;
-let test1 = FloatMatrix.from_list [[a;b;c];[d;e;f]];;
-FloatMatrix.print test1;;
-let test2 = FloatMatrix.from_list [[a;a];[a;a]];;
-FloatMatrix.print test2;;
-let test3 = FloatMatrix.from_list [[Floats.zero;a];[Floats.zero;b]];;
-FloatMatrix.print test3;;
-let test4 = FloatMatrix.from_list [[a;b];[c;d]];;
-FloatMatrix.print test4;;
+let a = Elts.generate ();;
+let b = Elts.generate_gt a ();;
+let c = Elts.generate_gt b ();;
+let d = Elts.generate_gt c ();;
+let e = Elts.generate_gt d ();;
+let f = Elts.generate_gt e ();;
+let test1 = EltMatrix.from_list [[a;b;c];[d;e;f]];;
+EltMatrix.print test1;;
+let test2 = EltMatrix.from_list [[a;a];[a;a]];;
+EltMatrix.print test2;;
+let test3 = EltMatrix.from_list [[Elts.zero;a];[Elts.zero;b]];;
+EltMatrix.print test3;;
+let test4 = EltMatrix.from_list [[a;b];[c;d]];;
+EltMatrix.print test4;;
 
-(*let test2 = FloatMatrix.from_list [[a;b];[e;f]];;
-FloatMatrix.print (FloatMatrix.inverse test2);;
+(*let test2 = EltMatrix.from_list [[a;b];[e;f]];;
+EltMatrix.print (EltMatrix.inverse test2);;
 *)
-let reduced = FloatMatrix.row_reduce test1 in
-FloatMatrix.print reduced;;
-let reduced = FloatMatrix.row_reduce test2 in
-FloatMatrix.print reduced;;
-let reduced = FloatMatrix.row_reduce test3 in
-FloatMatrix.print reduced;;
-let inverse = FloatMatrix.inverse test4 in
-FloatMatrix.print inverse;; *)
+let reduced = EltMatrix.row_reduce test1 in
+EltMatrix.print reduced;;
+let reduced = EltMatrix.row_reduce test2 in
+EltMatrix.print reduced;;
+let reduced = EltMatrix.row_reduce test3 in
+EltMatrix.print reduced;;
+let inverse = EltMatrix.inverse test4 in
+EltMatrix.print inverse;; *)

@@ -1,3 +1,6 @@
+(* At the bottom, setting the Elts module equal to one of the following uses
+ * that module for the creation of matrices and simplex *)
+
 module Floats : EltsI.ORDERED_AND_OPERATIONAL =
 struct
 
@@ -66,3 +69,5 @@ struct
     test_compare times ;
     ()
 end
+
+module Elts = Floats
