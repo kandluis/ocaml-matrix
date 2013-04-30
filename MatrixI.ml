@@ -66,9 +66,7 @@ sig
   val mult: matrix -> matrix -> matrix
 
   (**** Other Library Functions ***)
-
-  (* Returns the determinant of the matrix *)
-  
+  (* Returns the determinant of the matrix *) 
   val det: matrix -> elt
 
   (* Will implement this algorithm based on a description in Hubbard. Involves
@@ -76,62 +74,34 @@ sig
    * track of the operations to build a sequence of coefficients to multiply *)
 
   (* Returns a list of eigenvalues and eigenvectors of a matrix *)
-
   val eigen: matrix -> (elt *matrix) list option
 
   (* Calculates successive powers of the input matrix, each multiplied by the
    * same basis vector. Generates a polynomial and solves for zeros, which
    * yields eigenvalues. Repeat for all basis vectors *)
 
-  (* Takes a string and builds a matrix from it *)
-    
+  (* Takes a string and builds a matrix from it *) 
   val from_string : string -> matrix
-    
-  (* We will have some way to express matrices using strings, and then we will
-    * parse the string to give the matrix *)
-    
+
+  (* Takes a string and builds an elt from it *)
+  val from_string_elt : string -> elt
+
+  (* Takes a list of lists and converts that to a matrix *)
+  val from_list : (elt list list) -> matrix
+
   (* Prints out the contents of a matrix *)
   val print : matrix -> unit
 
   (* Runs tests on the Matrix Module *)
   val run_tests : int -> unit 
+    
+  (* We will have some way to express matrices using strings, and then we will
+    * parse the string to give the matrix *)
 
-end
-
-(* Signature to encapsulate the Simplex functions *)
-module type SIMPLEXMATRIX =
-sig
-
-  exception NonSquare
-  exception ImproperDimensions
-
-  (******** TYPES ********)
-  type elt
-
-  type matrix
-
-  
-  (******** TYPICAL SINGLE MATRIX OPERATIONS ********)
-  (* get's the row of a matrix: Not zero-indexed. *)
-  val get_row : matrix -> int -> (int * elt array)
-
-  (* similar to get_row *)
-  val get_column: matrix -> int -> (int * elt array)
-
-  (* sets the row of a matrix in place! Not zero-index *)
-  val set_row: matrix -> int -> elt array -> unit 
-
-  (* similar to set_row, but for a column *)
-  val set_column: matrix -> int -> elt array -> unit
-
-  (* gets the element at the specified index. *)
-  val get_elt: matrix -> (int * int) -> elt 
-
-  
   (********** Specific for Simplex Algorithm ***********)
   (** All of the following functions will raise ImproperDimensions
    * Exception if the matrix is not the right size for the operation 
-  **)
+   **)
 
   (* Finds the index of the maximum element in an array *)
   val find_max_col_index: elt array -> int -> int option 
@@ -144,11 +114,5 @@ sig
 
   (* Subtracts a multiple of one row (the 2nd int) from another (the 1st int) *)
   val sub_mult: matrix -> int -> int -> elt -> unit
-    
-  (* Takes a list of lists and converts that to a matrix *)
-  val from_list : (elt list list) -> matrix
-
-  (* Prints out the contents of a matrix *)
-  val print : matrix -> unit
 
 end

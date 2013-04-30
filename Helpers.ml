@@ -1,3 +1,5 @@
+open Elts
+
 let explode (s: string) (space: string) : string list =
   let rec build (curr: string) (buffer: string) (lst: string list) : string list =
     let len = String.length curr in

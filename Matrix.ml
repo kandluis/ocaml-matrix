@@ -6,7 +6,8 @@ exception TODO
 (* We don't specify a type so we can generilize this to both the library
  * and the SimplexMatrix module. We don't want simplex having access too 
  * anything more than what it needs - following our obfuscation model *)
-module MakeMatrix (C: EltsI.ORDERED_AND_OPERATIONAL) =
+module MakeMatrix (C: EltsI.ORDERED_AND_OPERATIONAL) : 
+  (MatrixI.MATRIX with type elt = C.t) =
 struct
 
   (*************** Exceptions ***************)
@@ -434,6 +435,8 @@ struct
     let char_list = List.map convert rows in
     from_list char_list
 
+  let from_string_elt = C.from_string
+
   let det (m: matrix) : elt = raise TODO
 
   (* Returns the norm of the matrix *)
@@ -605,34 +608,5 @@ struct
 
 end
 
-(* Creation of the Matrix Module now happens in the Interface.ml *)
-(* Creation of the SimplexMatrix modules happens in Simplex.ml *) 
-(* Testing of the complete matrix module happens, then, in Interface.ml *)
-
-(*
-let a = Elts.generate ();;
-let b = Elts.generate_gt a ();;
-let c = Elts.generate_gt b ();;
-let d = Elts.generate_gt c ();;
-let e = Elts.generate_gt d ();;
-let f = Elts.generate_gt e ();;
-let test1 = EltMatrix.from_list [[a;b;c];[d;e;f]];;
-EltMatrix.print test1;;
-let test2 = EltMatrix.from_list [[a;a];[a;a]];;
-EltMatrix.print test2;;
-let test3 = EltMatrix.from_list [[Elts.zero;a];[Elts.zero;b]];;
-EltMatrix.print test3;;
-let test4 = EltMatrix.from_list [[a;b];[c;d]];;
-EltMatrix.print test4;;
-
-(*let test2 = EltMatrix.from_list [[a;b];[e;f]];;
-EltMatrix.print (EltMatrix.inverse test2);;
-*)
-let reduced = EltMatrix.row_reduce test1 in
-EltMatrix.print reduced;;
-let reduced = EltMatrix.row_reduce test2 in
-EltMatrix.print reduced;;
-let reduced = EltMatrix.row_reduce test3 in
-EltMatrix.print reduced;;
-let inverse = EltMatrix.inverse test4 in
-EltMatrix.print inverse;; *)
+(* Creating the Matrix Library module! *)
+module EltMatrix = MakeMatrix(Elts)

@@ -4,7 +4,7 @@ all: simplex
 FILES = \
 	Order.ml EltsI.ml Elts.ml \
 	Helpers.ml MatrixI.ml Matrix.ml \
-	Simplex.ml Interface.ml Main.ml
+	SimplexI.ml Interface.ml Main.ml
 
 simplex: $(FILES)
 	ocamlc -g -o simplex $(FILES)
