@@ -21,6 +21,7 @@
  * Video URL: 
  *)
 
+
 module type SIMPLEX =
 sig
 
@@ -28,9 +29,12 @@ sig
 
 end 
 
-(* module Simplex: SIMPLEX =
+module Simplex(C: EltsI.ORDERED_AND_OPERATIONAL): SIMPLEX =
 struct
-	
+
+	module M : (MatrixI.SIMPLEXMATRIX with type elt = C.t) =
+  	Matrix.MakeMatrix(C)
+
+	type elt = M.elt	
 
 end
-*)

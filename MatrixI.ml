@@ -41,15 +41,8 @@ sig
   val transpose: matrix -> matrix
 
   (* Returns the trace of the matrix *)
-  val trace: matrix -> elt list
+  val trace: matrix -> elt 
 
-  (* For testing only *)
-  val find_max_col_index: elt array -> int -> int option 
-
-  (****** Used in the Simplex Algorithm Directly ******)
-  (** All of the following functions will raise ImproperDimensions
-   * Exception if the matrix is not the right size for the operation 
-  **)
   (* get's the row of a matrix: Not zero-indexed. *)
   val get_row : matrix -> int -> (int * elt array)
 
@@ -65,15 +58,8 @@ sig
   (* gets the element at the specified index. *)
   val get_elt: matrix -> (int * int) -> elt 
 
-  (* Scales a row *)
-  val scale_row: matrix -> int -> elt -> unit
-
-  (* Swaps two rows *)
-  val swap_row: matrix -> int -> int -> unit
-
-  (* Subtracts a multiple of one row (the 2nd int) from another (the 1st int) *)
-  val sub_mult: matrix -> int -> int -> elt -> unit
-
+  (**** Other Library Functions ***)
+  
   (*
   (* Returns the determinant of the matrix *)
   
@@ -104,5 +90,52 @@ sig
 
   (* Runs tests on the Matrix Module *)
   val run_tests : int -> unit 
+
+end
+
+(* Signature to encapsulate the Simplex functions *)
+module type SIMPLEXMATRIX =
+sig
+
+  exception NonSquare
+  exception ImproperDimensions
+
+  type elt
+
+  type matrix
+
+  (* For Simplex only only *)
+  val find_max_col_index: elt array -> int -> int option 
+
+  (****** Used in the Simplex Algorithm Directly ******)
+  (** All of the following functions will raise ImproperDimensions
+   * Exception if the matrix is not the right size for the operation 
+  **)
+  (* get's the row of a matrix: Not zero-indexed. *)
+  val get_row : matrix -> int -> (int * elt array)
+
+  (* similar to get_row *)
+  val get_column: matrix -> int -> (int * elt array)
+
+  (* sets the row of a matrix in place! Not zero-index *)
+  val set_row: matrix -> int -> elt array -> unit 
+
+  (* similar to set_row, but for a column *)
+  val set_column: matrix -> int -> elt array -> unit
+
+  (* gets the element at the specified index. *)
+  val get_elt: matrix -> (int * int) -> elt 
+
+  (* Scales a row *)
+  val scale_row: matrix -> int -> elt -> unit
+
+  (* Swaps two rows *)
+  val swap_row: matrix -> int -> int -> unit
+
+  (* Subtracts a multiple of one row (the 2nd int) from another (the 1st int) *)
+  val sub_mult: matrix -> int -> int -> elt -> unit
+    
+  (* Prints out the contents of a matrix *)
+  val print : matrix -> unit
 
 end

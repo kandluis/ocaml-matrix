@@ -3,8 +3,10 @@ open Elts
 
 exception TODO
 
-module Matrix (C: EltsI.ORDERED_AND_OPERATIONAL) : 
-  (MatrixI.MATRIX with type elt = C.t) =
+(* We don't specify a type so we can generilize this to both the library
+ * and the SimplexMatrix module. We don't want simplex having access too 
+ * anything more than what it needs - following our obfuscation model *)
+module MakeMatrix (C: EltsI.ORDERED_AND_OPERATIONAL) =
 struct
 
   (*************** Exceptions ***************)
@@ -371,13 +373,13 @@ struct
   (*************** Optional module functions ***************)
 
   (* calculates the trace of a matrix and returns it as an elt list *)
-  let trace (((n,p),m): matrix) : elt list =
-    let rec build (lst: elt list) (i: int) =
+  let trace (((n,p),m): matrix) : elt =
+    let rec build (elt: elt) (i: int) =
       if i > 0 then
-        build (m.(i).(i)::lst) (i - 1)
+        build (C.add m.(i).(i) elt) (i - 1)
       else
-        lst in
-    if n = p then build [] n
+        elt in
+    if n = p then build C.zero n
     else raise ImproperDimensions 
 
   (* calculates the transpose of a matrix and retuns a new one *)
@@ -585,11 +587,11 @@ struct
 
 end
 
-module FloatMatrix = Matrix(Floats)
+(* Creation of the Matrix Module now happens in the Interface.ml *)
+(* Creation of the SimplexMatrix modules happens in Simplex.ml *) 
+(* Testing of the complete matrix module happens, then, in Interface.ml *)
 
-let _ = FloatMatrix.run_tests 30 ;;
-
-
+(*
 let a = Floats.generate ();;
 let b = Floats.generate_gt a ();;
 let c = Floats.generate_gt b ();;
@@ -615,4 +617,4 @@ FloatMatrix.print reduced;;
 let reduced = FloatMatrix.row_reduce test3 in
 FloatMatrix.print reduced;;
 let inverse = FloatMatrix.inverse test4 in
-FloatMatrix.print inverse;;
+FloatMatrix.print inverse;; *)
