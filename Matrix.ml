@@ -395,13 +395,17 @@ struct
   let inverse (mat: matrix) : matrix =
     let ((n,p),m) = mat in
     if n = p then
-      (* create a new matrix with twice the number of columns *)
+      (* create augmented matrix *)
       let augmented = empty n (2*n) in
       for i = 1 to n do
         let (dim,col) = get_column mat i in
-        let _ = assert(dim = n) in
-        let _ = set_column augmented i col in
-        ()
+        let arr = Array.make n C.zero in
+        begin
+          assert(dim = n);
+          arr.(i-1) <- C.one;
+          set_column augmented i col;
+          set_column augmented (n + i) arr
+        end
       done;
       let augmented' = row_reduce augmented in
       (* create the inverted matrix and fill in with appropriate values *)
@@ -566,13 +570,7 @@ struct
       assert(e_result = result);
       test_reduce (times - 1)
 
-  (*************** Testing Helper Functions ***************)
-
-  (*************** End Testing Helper Functions ***************)
-
-  (*************** Testing Main Functions ***************)
-
-  (*************** End Testing Main Functions ***************)
+  (*************** End Test Functions ***************)
 
   let run_tests times = 
     test_empty times;
@@ -589,7 +587,7 @@ end
 
 module FloatMatrix = Matrix(Floats)
 
-let _ = FloatMatrix.run_tests 20 ;;
+let _ = FloatMatrix.run_tests 30 ;;
 
 
 let a = Floats.generate ();;
@@ -618,5 +616,3 @@ let reduced = FloatMatrix.row_reduce test3 in
 FloatMatrix.print reduced;;
 let inverse = FloatMatrix.inverse test4 in
 FloatMatrix.print inverse;;
-
-
