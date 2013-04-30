@@ -9,7 +9,7 @@ module EltMatrix : (MATRIX with type elt = Elts.t) =
 
 (* Creating the Simplex specific Module *)
 module EltSimplex : SIMPLEX = 
-  Simplex(Elts)  
+  MakeSimplex(Elts)  
 
 (* Testing the Matrix Library *)
 let test times = 
@@ -44,6 +44,4 @@ let parse_args () : unit =
       | Sys_error e -> usage e)
   | _ -> usage "Incorrect inputs."
 ;;
-
-parse_args () ;;
 
