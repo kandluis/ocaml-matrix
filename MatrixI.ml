@@ -108,9 +108,6 @@ sig
    * Exception if the matrix is not the right size for the operation 
    **)
 
-  (* Finds the index of the maximum element in an array *)
-  val find_max_index: elt array -> int -> int
-
   (* Scales a row *)
   val scale_row: matrix -> int -> elt -> unit
 
