@@ -12,9 +12,9 @@ sig
 
   val break_system : system -> matrix * (int list * int list)
 
-  val load : string -> system
+  (*val load : string -> system*)
  
-  val solve : matrix -> elt option
+  val solve : system -> elt option
   
   val run_tests : int -> unit
 
@@ -30,8 +30,6 @@ struct
 
   let break_system (s: system) : matrix * (int list * int list) =
     let (m,(lst1,lst2)) = s in (m,(lst1,lst2)) 
-
-  let solve (m: matrix) : elt option = None
   
   let pivot (s: system) (l:int) : system =
     (* extracting information from the system *)
@@ -101,9 +99,56 @@ struct
     let non' = e::(List.filter (fun x -> x <> l) non) in
     (mat,(non',basic'))
 
-  let load (s: string) : system =
-    try 
-
   let run_tests times = ()
-      
+
+  (* SOLVE *)
+  let rec solve (s: system) : elt option = 
+ 
+    let (mat,(non,basic)) = break_system s in
+
+    (* We need this to be accessible everywhere *)
+    let (n,p) = get_dimensions mat in
+
+    (* checks to see if the column of a given index contains at least one positive value *)
+    let check_col (x:int): bool = 
+      let (height_col, col) = get_column mat x in
+      let rec has_pos (i:int) (arr_x: elt array): bool = 
+        if i < height_col then 
+          match Elts.compare arr_x.(i) Elts.zero with 
+          | Less | Equal -> has_pos (i+1) arr_x
+          | Greater -> true
+        else false in 
+      has_pos 1 col in 
+
+    (* checks to see if the row of a given index contains at least one positive value *)
+    let check_row (x:int): bool = 
+      let (height_row, row) = get_row mat x in
+      let rec has_pos (i:int) (arr_x: elt array): bool = 
+        if i < height_row then 
+          match Elts.compare arr_x.(i) Elts.zero with 
+          | Less | Equal -> has_pos (i+1) arr_x
+          | Greater -> true
+        else false in 
+      has_pos 0 row in 
+
+    (* recursively loops through non to determine leaving variable *)
+    let rec find_l (non_lst: int list): int option = 
+      let (row_length, first_row) = get_row mat 1 in 
+        match non_lst with 
+        | [] -> None
+        | hd::tl -> 
+          match Elts.compare first_row.(hd) Elts.zero with 
+          | Greater -> 
+            if (check_col hd) then (Some hd) 
+            else find_l tl 
+          | Less | Equal -> find_l tl in
+  
+   match find_l non with 
+   | None -> 
+     if not(check_row 1) then (Some (get_elt mat (1,p)))
+     else raise (Failure "unbounded: no solution")
+   | Some x -> 
+     let s' = pivot s x in 
+     solve s'     
+ 
 end

@@ -25,7 +25,7 @@ let parse_args () : unit =
       test times
     with
       | Failure s -> usage s)
-  | "solve"-> 
+  | "solve"-> ()(*
     (try 
       let filename =  Sys.argv.(2) in
       let inchan = open_in filename in
@@ -34,7 +34,7 @@ let parse_args () : unit =
         | None -> (print_string "No solution exists for:\n"; EltMatrix.print m)
         | Some sol -> (print_string "Solution: "; Elts.print sol)) 
     with
-      | Sys_error e -> usage e)
+      | Sys_error e -> usage e) *)
   | _ -> usage "Incorrect inputs."
 ;;
 
