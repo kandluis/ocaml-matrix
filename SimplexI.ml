@@ -6,7 +6,7 @@ open EltMatrix
 module type SIMPLEX =
 sig
  
-  val solve : matrix -> elt option
+  val solve : matrix ->(* int list * int list -> *)elt option
   
   val run_tests : int -> unit
 
@@ -17,8 +17,6 @@ end
 
 module Simplex: SIMPLEX =
 struct
-
-  let solve (m: matrix) : elt option = None
 
   let run_tests times = ()
   
@@ -87,5 +85,54 @@ struct
     let basic' = l::(List.filter (fun x -> x <> e) basic) in
     let non' = e::(List.filter (fun x -> x <> l) non) in
     (non',basic')
-      
+
+  (* SOLVE *)
+  let rec solve (mat: matrix) (*((non,basic): (int list * int list))*): elt option = 
+ 
+    (* We need this to be accessible everywhere *)
+    let (n,p) = get_dimensions mat in
+
+    (* checks to see if the column of a given index contains at least one positive value *)
+    let check_col (x:int): bool = 
+      let (height_col, col) = get_column mat x in
+      let rec has_pos (i:int) (arr_x: elt array): bool = 
+        if i < height_col then 
+          match Elts.compare arr_x.(i) Elts.zero with 
+          | Less | Equal -> has_pos (i+1) arr_x
+          | Greater -> true
+        else false in 
+      has_pos 1 col in 
+
+    (* checks to see if the row of a given index contains at least one positive value *)
+    let check_row (x:int): bool = 
+      let (height_row, row) = get_row mat x in
+      let rec has_pos (i:int) (arr_x: elt array): bool = 
+        if i < height_row then 
+          match Elts.compare arr_x.(i) Elts.zero with 
+          | Less | Equal -> has_pos (i+1) arr_x
+          | Greater -> true
+        else false in 
+      has_pos 0 row in 
+
+    (* recursively loops through non to determine leaving variable *)
+    let rec find_l (non_lst: int list): int option = 
+      let (row_length, first_row) = get_row mat 1 in 
+        match non_lst with 
+        | [] -> None
+        | hd::tl -> 
+          match Elts.compare first_row.(hd) Elts.zero with 
+          | Greater -> 
+            if (check_col hd) then (Some hd) 
+            else find_l tl 
+          | Less | Equal -> find_l tl in
+  
+   match find_l non with 
+   | None -> 
+     if not(check_row 1) then (Some (get_elt mat (1,p)))
+     else raise (Failure "unbounded: no solution")
+   | Some x -> 
+     let (non',basic') = pivot mat (non,basic) x in 
+     solve mat (non',basic')      
+ 
+    
 end
