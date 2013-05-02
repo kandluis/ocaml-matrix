@@ -7,7 +7,7 @@ open SimplexI
 let test times = 
   let _ = EltMatrix.run_tests times in
   let _ = Elts.run_tests times in
-  let _ = Simplex.run_tests times in
+  let _ = Simplex.run_tests in
   print_string "If no errors above, then all tests passed!\n"
 
 (* Parse command-line arguments. Parses filename *)
@@ -28,7 +28,8 @@ let parse_args () : unit =
   | "solve"-> 
     (try 
       let filename =  Sys.argv.(2) in
-      let m = EltMatrix.load filename in
+      let inchan = open_in filename in
+      let m = Simplex.load inchan in
       (match Simplex.solve m with
         | None -> (print_string "No solution exists for:\n"; EltMatrix.print m)
         | Some sol -> (print_string "Solution: "; Elts.print sol)) 

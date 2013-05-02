@@ -5,47 +5,61 @@ open EltMatrix
 
 module type SIMPLEX =
 sig
+
+  type system
+
+  val make_system : matrix -> (elt list * elt list) -> system
+
+  val break_system : system -> matrix * (elt list * elt list)
+
+  val load : string -> system
  
   val solve : matrix -> elt option
   
   val run_tests : int -> unit
-
-  val pivot : matrix -> int list * int list -> int -> int list * int list
-
 
 end 
 
 module Simplex: SIMPLEX =
 struct
 
+  type system = matrix * (elt list * elt list)
+
+  let make_system (m: matrix) ((lst1:, lst2): elt list * elt list) : system =
+   let s = m,(lst1,lst2) in s
+
+  let break_system (s: system) : matrix * (elt list * elt list) =
+    let (m,(lst1,lst2)) = s in (m,(lst1,lst2)) 
+
   let solve (m: matrix) : elt option = None
 
-  let run_tests times = ()
+  (* Helper function to find the greatest constraint *)
+  let min_index (arr_b : elt array) (arr_c : elt array) : int = 
+    let rec index (i:int) (min:int) (min_elt: elt option): int = 
+      if i < n then
+        match Elts.compare arr_b.(i) Elts.zero with
+        | Less | Equal -> index (i+1) min min_elt  
+        | Greater ->
+                let curr_div = Elts.divide arr_c.(i) arr_b.(i) in
+          match min_elt with
+          | None -> index (i+1) i (Some curr_div)
+          | Some prev_div ->
+            match Elts.compare curr_div prev_div with
+            | Less  -> index (i+1) i (Some curr_div)
+            | Equal | Greater -> index (i+1) min min_elt 
+      else (* we've reached the end *)
+        min+1 (* matrices are NOT zero indexed *)in
+          match index 1 0 None with 
+          | 1 -> raise (Failure "Could not find min_index.")
+          | i -> i in
   
-  let pivot (mat: matrix) ((non,basic): (int list * int list)) (l:int)
-    : (int list * int list) =
+  let pivot (s: system) (l:int): system =
+
+    (* getting the data from the system *)
+    let (mat,(non,basic)) = break_system s
+
     (* We need this to be accessible everywhere *)
     let (n,p) = get_dimensions mat in
-
-    (* Helper function to find the greatest constraint *)
-    let min_index (arr_b : elt array) (arr_c : elt array) : int = 
-      let rec index (i:int) (min:int) (min_elt: elt option): int = 
-	if i < n then
-	  match Elts.compare arr_b.(i) Elts.zero with
-	  | Less | Equal -> index (i+1) min min_elt  
-	  | Greater ->
-            let curr_div = Elts.divide arr_c.(i) arr_b.(i) in
-	    match min_elt with
-	    | None -> index (i+1) i (Some curr_div)
-	    | Some prev_div ->
- 	      match Elts.compare curr_div prev_div with
-	      | Less  -> index (i+1) i (Some curr_div)
-	      | Equal | Greater -> index (i+1) min min_elt 
-	else (* we've reached the end *)
-	  min+1 (* matrices are NOT zero indexed *)in
-      match index 1 0 None with 
-      | 1 -> raise (Failure "Could not find min_index.")
-      | i -> i in
 
     (* gets our leaving column *)
     let (len1,column) = get_column mat l in
@@ -87,5 +101,7 @@ struct
     let basic' = l::(List.filter (fun x -> x <> e) basic) in
     let non' = e::(List.filter (fun x -> x <> l) non) in
     (non',basic')
+
+  let run_tests times = ()
       
 end
