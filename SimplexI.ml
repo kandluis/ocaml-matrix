@@ -28,15 +28,15 @@ struct
     let (n,p) = get_dimensions mat in
 
     (* Helper function to find the greatest constraint *)
-    let max_index (arr_b : elt array) (arr_c : elt array) : int = 
-      let rec index (i:int) (max:int) (max_elt: elt): int = 
+    let min_index (arr_b : elt array) (arr_c : elt array) : int = 
+      let rec index (i:int) (min:int) (min_elt: elt): int = 
 	if i < n then
           let curr_elt = Elts.divide arr_c.(i) arr_b.(i) in
- 	  (match Elts.compare curr_elt max_elt with
-	  | Greater -> index (i+1) i curr_elt
-	  | Less | Equal -> index (i+1) max curr_elt) 
+ 	  (match Elts.compare curr_elt min_elt with
+	  | Less -> index (i+1) i curr_elt
+	  | Greater | Equal -> index (i+1) min curr_elt) 
 	else (* we've reached the end *)
-	  max+1 (* matrices are NOT zero indexed *)in
+	  min+1 (* matrices are NOT zero indexed *)in
       index 2 1 (Elts.divide arr_c.(1) arr_b.(1)) in
 
     (* gets our leaving column *)
@@ -44,10 +44,11 @@ struct
 
     (* gets our constants column *)
     let (len2,last) = get_column mat p in  
-    let _ = assert(p = len1 && p = len2) in
+    let _ = assert(n = len1) in
+    let _ = assert(n = len2) in
 
     (* finds the row with the maximum constraint *)
-    let row_index = max_index column last in
+    let row_index = min_index column last in
 
     (* Finds the entering variable *)
     let rec find_entering (lst: int list) : int option =
@@ -59,7 +60,7 @@ struct
 	| Equal -> Some hd
 	| Less | Greater -> find_entering tl in
     let e =
-      match find_entering non with
+      match find_entering basic with
       | None -> raise (Failure "Could not find entering variable")
       | Some x -> x in
 
@@ -75,8 +76,8 @@ struct
     done;
 
     (* modify the set *)
-    let basic' = e::(List.filter (fun x -> x <> l) basic) in
-    let non' = l::(List.filter (fun x -> x <> e) non) in
+    let basic' = l::(List.filter (fun x -> x <> e) basic) in
+    let non' = e::(List.filter (fun x -> x <> l) non) in
     (non',basic')
       
 end
