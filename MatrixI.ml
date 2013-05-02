@@ -34,6 +34,9 @@ sig
   (* gets the element at the specified index. *)
   val get_elt: matrix -> (int * int) -> elt 
 
+  (* sets the element at the specified index *)
+  val set_elt: matrix -> (int * int) -> elt -> unit
+
   (* Scales every element in the matrix by another elt *)
   val scale : matrix -> elt -> matrix
 
@@ -106,7 +109,7 @@ sig
    **)
 
   (* Finds the index of the maximum element in an array *)
-  val find_max_col_index: elt array -> int -> int option 
+  val find_max_index: elt array -> int -> int 
 
   (* Scales a row *)
   val scale_row: matrix -> int -> elt -> unit

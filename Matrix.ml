@@ -108,6 +108,12 @@ struct
     else 
       raise ImproperDimensions
 
+  let set_elt (((n,p),m): matrix) ((i,j): int*int) (e: elt) : unit =
+    if i <= n && j <= p then
+      m.(i - 1).(j - 1) <- e 
+    else 
+      raise ImproperDimensions
+
   (* similar to map, but applies to function to the entire matrix 
    * Returns a new matrix *)
   let map (f: elt -> elt) ((dim,m): matrix) : matrix = 
