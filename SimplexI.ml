@@ -41,9 +41,11 @@ struct
   
   let pivot (A: matrix) ((N,B): (int list * int list)) (l:int)
     : (int list * int list) =
-    let (l,column) = get_column A l in 
     let (n,p) = get_dimensions A in 
+    let (l,column) = get_column A l in 
+    let (l1, last) = get_column A p in  
     let _ = assert(p = l) in 
+    
     let index = 
     
         
