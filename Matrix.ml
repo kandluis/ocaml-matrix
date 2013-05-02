@@ -108,6 +108,12 @@ struct
     else 
       raise ImproperDimensions
 
+  let set_elt (((n,p),m): matrix) ((i,j): int*int) (e: elt) : unit =
+    if i <= n && j <= p then
+      m.(i - 1).(j - 1) <- e 
+    else 
+      raise ImproperDimensions
+
   (* similar to map, but applies to function to the entire matrix 
    * Returns a new matrix *)
   let map (f: elt -> elt) ((dim,m): matrix) : matrix = 
@@ -267,16 +273,15 @@ struct
    * 0-indexed. If two elements are both the maximum value, returns the one with
    * the lowest index. Returns None if this element is zero (if column is all 0)
    *)
+ let compare_helper (e1: elt) (e2: elt) (ind1: int) (ind2: int) : (elt*int) = 
+    match C.compare e1 e2 with 
+    | Equal -> (e2, ind2)
+    | Greater -> (e1, ind1)
+    | Less -> (e2, ind2) 
+
   let find_max_col_index (array1: elt array) (start_index: int) : int option = 
     (* Compares two elements in an elt array and returns the greater and its
      * index *)
-    let compare_helper (e1: elt) (e2: elt) (ind1: int) (ind2: int) : (elt*int) = 
-      match C.compare e1 e2 with 
-      | Equal -> (e2, ind2)
-      | Greater -> (e1, ind1)
-      | Less -> (e2, ind2) 
-    in
-
     (* Helper function *) 
     let rec find_index (max_index: int) (curr_max: elt) (curr_index: int) 
         (arr: elt array) = 
@@ -373,17 +378,56 @@ struct
 
   (*************** End Main Functions ***************)
 
+  (************** Input and Output Functions **********)
+  let rec read_data (chan: in_channel) : elt list list =  
+    try
+      let row = input_line chan in
+      let chars = Helpers.explode row "," in
+      (List.map C.from_string chars)::read_data chan
+     with End_of_file -> []
+
+  let load (s: string): matrix =
+    try
+      let chan = open_in s in
+      let m_list = read_data chan in
+      let matrix = from_list m_list in
+      close_in chan; matrix
+    with
+    | e -> raise e 
+
+  let write_data (((row,col),m): matrix) : string =
+    let buffer = ref "" in
+    let to_string (_: int) (j: int) (e: elt) =
+      buffer := !buffer ^ C.to_string e;
+      buffer := !buffer ^ ",";
+      if j = col then
+        buffer := !buffer ^ "\n"
+      else () in
+    iteri to_string ((row,col),m);
+    !buffer
+
+  let dump (name: string) (m: matrix) : unit =
+    try 
+      let outchan = open_out name in
+      let s = write_data m in
+      output_string outchan s;
+      close_out outchan
+    with
+      | Sys_error e -> print_string e 
+
+
+
 
   (*************** Optional module functions ***************)
 
   (* calculates the trace of a matrix and returns it as an elt list *)
   let trace (((n,p),m): matrix) : elt =
     let rec build (elt: elt) (i: int) =
-      if i > 0 then
+      if i > -1 then
         build (C.add m.(i).(i) elt) (i - 1)
       else
         elt in
-    if n = p then build C.zero n
+    if n = p then build C.zero (n - 1)
     else raise ImproperDimensions 
 
   (* calculates the transpose of a matrix and retuns a new one *)
@@ -435,9 +479,85 @@ struct
     let char_list = List.map convert rows in
     from_list char_list
 
-  let from_string_elt = C.from_string
+  (***************** HELPER FUNCTIONS FOR DETERMINANT *****************)
+  (* creates an identity matrix of size n*)
+  let create_identity (n:int) : matrix = 
+    let (dim,m) = empty n n in
+    for i = 0 to n - 1 do
+      m.(i).(i) <- C.one
+    done;
+    (dim,m)
 
-  let det (m: matrix) : elt = raise TODO
+  let find_max_index (arr: elt array) (start_index : int) : int =
+    let rec find_index (max_index: int) (curr_index: int) = 
+      if curr_index = Array.length arr then max_index+1
+      else
+        match C.compare arr.(curr_index) arr.(max_index) with
+        | Equal | Less -> find_index max_index (curr_index + 1)
+        | Greater -> find_index curr_index (curr_index + 1) in
+    find_index (start_index - 1) start_index
+
+  (* Creates the pivoting matrix for A. Returns swqps. Adapted from 
+   * http://rosettacode.org/wiki/LU_decomposition#Common_Lisp *)
+  let pivotize (((n,p),m): matrix) : matrix * int =
+    if n = p then
+      let swaps = ref 0 in
+      let pivot_mat = create_identity n in
+      for j = 1 to n do
+        let (_,col) = get_column ((n,p),m) j in
+        let max_index = find_max_index col j in
+        if max_index <> j then 
+          (swaps := !swaps + 1; swap_row pivot_mat max_index j)
+        else ()
+      done; 
+      (pivot_mat,!swaps)
+    else raise ImproperDimensions
+
+  (* decomposes a matrix into a lower triangualar, upper triangualar 
+   * and a pivot matrix. It returns (L,U,P). Adapted from 
+   * http://rosettacode.org/wiki/LU_decomposition#Common_Lisp *)
+  let lu_decomposition (((n,p),m): matrix) : (matrix*matrix*matrix)*int =
+    if n = p then
+      let mat = ((n,p),m) in
+      let lower, upper, (pivot,s) = empty n n, empty n n, pivotize mat in
+      let ((x1,y1),l),((x2,y2),u),((x3,y3),p) = lower,upper,pivot in
+      let ((x,y),mat') = mult pivot mat in
+      for j = 0 to n - 1 do
+        l.(j).(j) <- C.one;
+        for i = 0 to j do
+          let sum = ref C.zero in
+            for k = 0 to i - 1 do
+              sum := C.add (!sum) (C.multiply u.(k).(j) l.(i).(k))
+            done;
+          u.(i).(j) <- C.subtract mat'.(i).(j) (!sum)
+        done;
+        for i = j to n - 1 do
+          let sum = ref C.zero in
+            for k = 0 to j - 1 do
+              sum := C.add (!sum) (C.multiply u.(k).(j) l.(i).(k))
+            done;
+          let sub = C.subtract mat'.(i).(j) (!sum) in
+          l.(i).(j) <- C.divide sub u.(j).(j)
+        done;
+      done;
+      (lower,upper,pivot),s
+    else raise ImproperDimensions 
+
+  let determinant (m: matrix) : elt =
+    let ((n,p),m') = m in
+    if n = p then 
+      let rec triangualar_det (a,mat) curr_index acc =
+        if curr_index < n then
+          let acc' = C.multiply mat.(curr_index).(curr_index) acc in
+          triangualar_det (a,mat) (curr_index + 1) acc' 
+        else acc in
+      let ((dim1,l),(dim2,u),(dim3,p)),s = lu_decomposition m in
+      let det1, det2 = triangualar_det (dim1,l) 0 C.one, 
+        triangualar_det (dim2,u) 0 C.one in
+      if s mod 2 = 0 then C.multiply det1 det2 
+      else C.subtract C.zero (C.multiply det1 det2)
+    else raise ImproperDimensions
+
 
   (* Returns the norm of the matrix *)
   let norm (m:matrix) : elt = raise TODO
@@ -448,7 +568,7 @@ struct
 
   (* Returns a list of eigenvalues and eigenvectors of a matrix *)
 
-  let eigen (m:matrix) : (elt *matrix) list option =
+  let eigen (m:matrix) : (elt*matrix) list option =
     raise TODO
 
 
