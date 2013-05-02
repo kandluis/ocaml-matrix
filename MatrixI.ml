@@ -34,6 +34,9 @@ sig
   (* gets the element at the specified index. *)
   val get_elt: matrix -> (int * int) -> elt 
 
+  (* sets the element at the specified index *)
+  val set_elt: matrix -> (int * int) -> elt -> unit
+
   (* Scales every element in the matrix by another elt *)
   val scale : matrix -> elt -> matrix
 
@@ -66,8 +69,11 @@ sig
   val mult: matrix -> matrix -> matrix
 
   (**** Other Library Functions ***)
+  (* Returns the LUP decomposition of a matrix *)
+  val lu_decomposition : matrix -> (matrix * matrix * matrix) * int
+
   (* Returns the determinant of the matrix *) 
-  val det: matrix -> elt
+  val determinant: matrix -> elt
 
   (* Will implement this algorithm based on a description in Hubbard. Involves
    * column reducing the input (or row-reducing the transpose) and then keeping
@@ -83,9 +89,6 @@ sig
   (* Takes a string and builds a matrix from it *) 
   val from_string : string -> matrix
 
-  (* Takes a string and builds an elt from it *)
-  val from_string_elt : string -> elt
-
   (* Takes a list of lists and converts that to a matrix *)
   val from_list : (elt list list) -> matrix
 
@@ -93,10 +96,12 @@ sig
   val print : matrix -> unit
 
   (* Runs tests on the Matrix Module *)
-  val run_tests : int -> unit 
-    
-  (* We will have some way to express matrices using strings, and then we will
-    * parse the string to give the matrix *)
+  val run_tests : int -> unit
+
+  (************** Input/ Output Functions *************)
+  val load : string -> matrix
+
+  val dump : string -> matrix -> unit
 
   (********** Specific for Simplex Algorithm ***********)
   (** All of the following functions will raise ImproperDimensions
@@ -104,7 +109,7 @@ sig
    **)
 
   (* Finds the index of the maximum element in an array *)
-  val find_max_col_index: elt array -> int -> int option 
+  val find_max_index: elt array -> int -> int
 
   (* Scales a row *)
   val scale_row: matrix -> int -> elt -> unit
