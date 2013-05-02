@@ -29,15 +29,23 @@ struct
 
     (* Helper function to find the greatest constraint *)
     let min_index (arr_b : elt array) (arr_c : elt array) : int = 
-      let rec index (i:int) (min:int) (min_elt: elt): int = 
+      let rec index (i:int) (min:int) (min_elt: elt option): int = 
 	if i < n then
-          let curr_elt = Elts.divide arr_c.(i) arr_b.(i) in
- 	  (match Elts.compare curr_elt min_elt with
-	  | Less -> index (i+1) i curr_elt
-	  | Greater | Equal -> index (i+1) min curr_elt) 
+	  match Elts.compare arr_b.(i) Elts.zero with
+	  | Less | Equal -> index (i+1) min min_elt  
+	  | Greater ->
+            let curr_div = Elts.divide arr_c.(i) arr_b.(i) in
+	    match min_elt with
+	    | None -> index (i+1) i (Some curr_div)
+	    | Some prev_div ->
+ 	      match Elts.compare curr_div prev_div with
+	      | Less  -> index (i+1) i (Some curr_div)
+	      | Equal | Greater -> index (i+1) min min_elt 
 	else (* we've reached the end *)
 	  min+1 (* matrices are NOT zero indexed *)in
-      index 2 1 (Elts.divide arr_c.(1) arr_b.(1)) in
+      match index 1 0 None with 
+      | 1 -> raise (Failure "Could not find min_index.")
+      | i -> i in
 
     (* gets our leaving column *)
     let (len1,column) = get_column mat l in
