@@ -101,6 +101,9 @@ struct
     let non' = e::(List.filter (fun x -> x <> l) non) in
     (mat,(non',basic'))
 
+  let load (s: string) : system =
+    try 
+
   let run_tests times = ()
       
 end
