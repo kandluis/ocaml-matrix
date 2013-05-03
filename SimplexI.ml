@@ -183,34 +183,34 @@ struct
         (solution,s)
       else raise (Failure "unbounded: no solution")
     | Some e -> 
-     (* gets our entering column *)
-     let (len1,column) = get_column mat e in
-     
-     (* gets our constants column *)
-     let (len2,last) = get_column mat p in  
-     let _ = assert(n = len1) in
-     let _ = assert(n = len2) in
+      (* gets our entering column *)
+      let (len1,column) = get_column mat e in
+      
+      (* gets our constants column *)
+      let (len2,last) = get_column mat p in  
+      let _ = assert(n = len1) in
+      let _ = assert(n = len2) in
 
-     (* finds the row with the maximum constraint *)
-     let row_index = min_index column last in
+      (* finds the row with the maximum constraint *)
+      let row_index = min_index column last in
 
-     (* Helper function which finds the leaving variable *)
-     let rec find_leaving (lst: int list) : int option =
-       match lst with
-       | [] -> None
-       | hd::tl -> 
-         let elt = get_elt mat (row_index,hd) in
-         match Elts.compare elt Elts.one with
-         | Equal -> Some hd
-         | Less | Greater -> find_leaving tl in
-     let l =
-       match find_leaving basic with
-       | None -> raise (Failure "Could not find entering variable")
-       | Some x -> x in
+      (* Helper function which finds the leaving variable *)
+      let rec find_leaving (lst: int list) : int option =
+        match lst with
+        | [] -> None
+        | hd::tl -> 
+          let elt = get_elt mat (row_index,hd) in
+          match Elts.compare elt Elts.one with
+          | Equal -> Some hd
+          | Less | Greater -> find_leaving tl in
+      let l =
+        match find_leaving basic with
+        | None -> raise (Failure "Could not find entering variable")
+        | Some x -> x in
 
-     let s' = pivot s e l in 
-     simple_solve s'  
-     (* end of Some case *)
+      let s' = pivot s e l in 
+      simple_solve s'  
+      (* end of Some case *)
 
   (* end of simple_solve *)
 
