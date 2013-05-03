@@ -73,11 +73,9 @@ struct
       raise (Failure "Column out of bounds.")
 
   (* sets the nth row of the matrix m to the specified array a. 
-   * This is done IN-PLACE. Therefore the function returns unit.
-   * You should nonetheless enfore immutability whenever possible. 
-   * For a clarification on what nth row means, look at comment for
-   * get_row above. 
-   *)
+   * This is done IN-PLACE. Therefore the function returns unit.  You should
+   * nonetheless enfore immutability whenever possible.  For a clarification on
+   * what nth row means, look at comment for get_row above. *)
   let set_row (((n,p),m): matrix) (row: int) (a: elt array) : unit =
     if row <= n then 
     begin
@@ -108,6 +106,8 @@ struct
     else 
       raise ImproperDimensions
 
+  (* Changes the i,j-th element of a matrix to e. Is not zero-indexed, and
+   * changes the matrix in place *)
   let set_elt (((n,p),m): matrix) ((i,j): int*int) (e: elt) : unit =
     if i <= n && j <= p then
       m.(i - 1).(j - 1) <- e 
@@ -172,7 +172,7 @@ struct
   (* scales a matrix by the appropriate factor *)
   let scale (m: matrix) (sc: elt) : matrix = map (C.multiply sc) m
 
-  (* This takes in a list of lists. The inners lists are the rows *)
+  (* Generates a matrix from a list of lists. The inners lists are the rows *)
   let from_list (lsts : elt list list) : matrix = 
     let rec check_length (length: int) (lst: elt list) : int =
       if List.length lst = length then length
@@ -219,7 +219,6 @@ struct
     else
       raise ImproperDimensions
 
-  (* Returns the row reduced form of a matrix *)
   (*************** Helper Functions for Row Reduce ***************)
 
   (* returns the index of the first non-zero elt in an array*)
@@ -233,9 +232,8 @@ struct
     Array.fold_left empty None arr
 
   (* returns the the location of the nth non-zero
-   * element in the matrix. Scans column wise.
-   * So the nth non-zero element is the FIRST non-zero
-   * element in the nth non-zero column *)
+   * element in the matrix. Scans column wise.  So the nth non-zero element is
+   * the FIRST non-zero element in the nth non-zero column *)
   let nth_nz_location (m: matrix) (n: int): (int*int) option =
     let ((n,p),m') = m in
     let rec check_col (to_skip: int) (j: int) =
@@ -269,20 +267,19 @@ struct
       else None in
     check_col 1
 
-  (* Finds the element with the greatest absolute value in a column. Is not 
-   * 0-indexed. If two elements are both the maximum value, returns the one with
-   * the lowest index. Returns None if this element is zero (if column is all 0)
-   *)
- let compare_helper (e1: elt) (e2: elt) (ind1: int) (ind2: int) : (elt*int) = 
+  (* Compares two elements in an elt array and returns the greater and its
+   * index. Is a helper function for find_max_col_index *)
+  let compare_helper (e1: elt) (e2: elt) (ind1: int) (ind2: int) : (elt*int) = 
     match C.compare e1 e2 with 
     | Equal -> (e2, ind2)
     | Greater -> (e1, ind1)
     | Less -> (e2, ind2) 
 
+  (* Finds the element with the greatest absolute value in a column. Is not 
+   * 0-indexed. If two elements are both the maximum value, returns the one with
+   * the lowest index. Returns None if this element is zero (if column is all 0)
+   *)
   let find_max_col_index (array1: elt array) (start_index: int) : int option = 
-    (* Compares two elements in an elt array and returns the greater and its
-     * index *)
-    (* Helper function *) 
     let rec find_index (max_index: int) (curr_max: elt) (curr_index: int) 
         (arr: elt array) = 
       if curr_index = Array.length arr then 
@@ -331,7 +328,8 @@ struct
 
   (*************** End Helper Functions for Row Reduce ***************)
 
-  (* row reduces a matrix *)
+  (* Returns the row reduced form of a matrix. Is not done in place, but creates
+   * a new matrix *)
   let row_reduce (mat: matrix) : matrix =
     let rec row_reduce_h (n_row: int) (n_col: int) (mat2: matrix) : unit = 
       let ((num_row, num_col), arr) = mat2 in
@@ -341,7 +339,6 @@ struct
         match find_max_col_index col n_row with
         | None (* Column all 0s *) -> row_reduce_h n_row (n_col+1) mat2 
         | Some index -> 
-          (* if index <> n_row then swap_row mat2 index n_row; *)
           begin
             swap_row mat2 index n_row;
             let pivot = get_elt mat2 (n_row, n_col) in
@@ -386,6 +383,7 @@ struct
       (List.map C.from_string chars)::read_data chan
      with End_of_file -> []
 
+  (* Load a matrix from a file with filename s *)
   let load (s: string): matrix =
     try
       let chan = open_in s in
@@ -406,6 +404,7 @@ struct
     iteri to_string ((row,col),m);
     !buffer
 
+  (* Dumps the matrix to a file with filename name *)
   let dump (name: string) (m: matrix) : unit =
     try 
       let outchan = open_out name in
@@ -420,7 +419,7 @@ struct
 
   (*************** Optional module functions ***************)
 
-  (* calculates the trace of a matrix and returns it as an elt list *)
+  (* calculates the trace of a matrix *)
   let trace (((n,p),m): matrix) : elt =
     let rec build (elt: elt) (i: int) =
       if i > -1 then
@@ -441,7 +440,7 @@ struct
     assert(dim = (p,n));
     ((p,n),m')
 
-  (* returns the inverse of a matrix. Uses a pretty simple algorithm *)
+  (* Returns the inverse of a matrix. Uses a pretty simple algorithm *)
   let inverse (mat: matrix) : matrix =
     let ((n,p),m) = mat in
     if n = p then
@@ -543,6 +542,7 @@ struct
       (lower,upper,pivot),s
     else raise ImproperDimensions 
 
+  (* Computes the determinant of a matrix *)
   let determinant (m: matrix) : elt =
     let ((n,p),m') = m in
     if n = p then 
@@ -560,7 +560,7 @@ struct
 
 
   (* Returns the norm of the matrix *)
-  let norm (m:matrix) : elt = raise TODO
+  (* let norm (m:matrix) : elt = raise TODO *)
 
   (* Will implement this algorithm based on a description in Hubbard. Involves
    * column reducing the input (or row-reducing the transpose) and then keeping
@@ -568,8 +568,9 @@ struct
 
   (* Returns a list of eigenvalues and eigenvectors of a matrix *)
 
-  let eigen (m:matrix) : (elt*matrix) list option =
-    raise TODO
+  (* let eigen (m:matrix) : (elt*matrix) list option =
+    raise TODO 
+  *)
 
 
   (*************** Optional module functions ***************)

@@ -8,6 +8,7 @@ struct
 
   type t = float
   
+  (* Need an epsilon to compare floats *)
   let epsilon = 0.000001
 
   let zero = 0.
