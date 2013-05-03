@@ -198,24 +198,27 @@ struct
    * until the end of the file is reached. *)
   let load_constraints (chan: in_channel) : elt list list =
     let rec load (built: elt list list) : elt list list =
-      let line = input_line chan in
-      let line_list = Helpers.explode line "," in
-      match load_constraint line_list with
-      | None, _ -> raise (ImproperInput "Constraint mismatch!")
-      | Some s, elt_lst ->
-        let neg_one = Elts.subtract Elts.zero Elts.one in
-        if s = "<=" then load (elt_lst::built)
-        else if s = ">=" then 
-          load ((List.map (Elts.multiply neg_one) elt_lst)::built)
-        else if s = "=" then 
-          let neg_lst = List.map (Elts.multiply neg_one) elt_lst in
-          load (elt_lst::neg_lst::built)
-        else
-          raise (Failure "Code went awry!") in
+      try
+        let line = input_line chan in
+        let line_list = Helpers.explode line "," in
+        match load_constraint line_list with
+        | None, _ -> raise (ImproperInput "Constraint mismatch!")
+        | Some s, elt_lst ->
+          let neg_one = Elts.subtract Elts.zero Elts.one in
+          if s = "<=" then load (elt_lst::built)
+          else if s = ">=" then 
+            load ((List.map (Elts.multiply neg_one) elt_lst)::built)
+          else if s = "=" then 
+            let neg_lst = List.map (Elts.multiply neg_one) elt_lst in
+            load (elt_lst::neg_lst::built)
+          else
+            raise (Failure "Code went awry!")
+        with
+          | End_of_file -> built in
     let line = String.lowercase (input_line chan) in
     match line with
     | "subject to" | "subject to\r" -> load []
-    | _ -> raise (ImproperInput line)
+    | _ -> raise (ImproperInput "Missing \"subject to\" on line 3")
     
 
   (* Applies f to every element of the list except the last one *)
