@@ -12,10 +12,13 @@ sig
   (* This is a Simplex system *)
   type system
 
+  (* These next two were exposed for testing *)
   val make_system : matrix -> (int list * int list) -> system
 
   val break_system : system -> matrix * (int list * int list)
 
+  (* Loads a system from a file whose name is given by string. Returns none if
+   * the system can't be solved *)
   val load_file : string -> system option
 
   val load_data : string -> matrix
@@ -24,15 +27,21 @@ sig
 
   val find_one_index : elt array -> int -> int
 
+  (* Loads a system from a matrix. Returns none if the system can't be solved *)
   val load_matrix : matrix -> system option
  
+  (* Finds the optimum solution to the system *)
   val solve : system -> elt 
 
+  (* Exposed for testing. We know simple_solve and pivot (and the things they
+   * depend on) work *)
   val simple_solve : system -> elt * system
 
   val pivot : system -> int -> int -> system
   
   val run_tests : int -> unit
+
+  val print_system : system -> unit
 
 end 
 
@@ -41,18 +50,21 @@ struct
 
   exception ImproperInput of string
 
+  (* A system contains a matrix in the canonical tableau form (see simplex
+  wikipedia article), plus two int lists which contain the indices of the basic
+  and nonbasic variables, respectively *)
   type system = matrix * (int list * int list)
 
+  (* Generates a system from a matrix and two int lists *)
   let make_system (m: matrix) ((lst1, lst2): int list * int list) : system =
    let s = m,(lst1,lst2) in s
 
+  (* Deconstructs a system into its components *)
   let break_system (s: system) : matrix * (int list * int list) =
     let (m,(lst1,lst2)) = s in (m,(lst1,lst2)) 
 
-  (* 
-     helper function to generate int list from a to b, inclusive
-     returns empty list if a > b 
-  *)
+  (* helper function to generate int list from a to b, inclusive returns empty
+   * list if a > b *)
   let rec generate_list (a:int) (b:int) : int list = 
     match a <= b with 
     | true -> a::(generate_list (a+1) b) 
@@ -64,12 +76,12 @@ struct
   let find_one_index (arr: elt array) (n: int) =
     let rec find (i: int) =
       if i < n then
-    	  match Elts.compare arr.(i) Elts.one with
-    	  | Equal -> i+1
-    	  | Greater | Less -> find (i+1)
+    match Elts.compare arr.(i) Elts.one with
+    | Equal -> i+1
+    | Greater | Less -> find (i+1)
       else
-      	raise (Failure "Could not find the constraint!") in
-      find 0 
+    raise (Failure "Could not find the constraint!") in
+    find 0 
  
   (* Pivots a system based on the entering and leaving variables *)
   let pivot (s: system) (e: int) (l: int) : system = 
@@ -96,15 +108,15 @@ struct
     (mat,(non',basic'))
 
   (* This solves the simple Simplex case. Returns the solution and a system *)
-  let rec simple_solve (s: system) : (elt * system) = 
+  let rec simple_solve (s: system) : (elt * system) =
     
     let (mat,(non,basic)) = break_system s in
     
     (* We need this to be accessible everywhere *)
     let (n,p) = get_dimensions mat in
     
-    (* checks to see if the column of a given index contains at least one 
-       positive value *)
+    (* Helper function which checks to see if the column of a given index
+     * contains at least one positive value *)
     let check_col (x:int): bool = 
       let (height_col, col) = get_column mat x in
       let rec has_pos (i:int) (arr_x: elt array): bool = 
@@ -113,10 +125,10 @@ struct
           | Less | Equal -> has_pos (i+1) arr_x
           | Greater -> true
         else false in 
-      has_pos 1 col in 
+      has_pos 1 col in (* end check_col *)
 
-    (* checks to see if the row of a given index contains at least one positive 
-       value *)
+    (* Helper function which checks to see if the row of a given index contains
+    at least one positive value *)
     let check_row (x:int): bool = 
       let (height_row, row) = get_row mat x in
       let rec has_pos (i:int) (arr_x: elt array): bool = 
@@ -125,9 +137,10 @@ struct
           | Less | Equal -> has_pos (i+1) arr_x
           | Greater -> true
         else false in 
-      has_pos 0 row in 
+      has_pos 0 row in (* end check_row *)
 
-    (* recursively loops through non to determine entering variable *)
+    (* Helper function which recursively loops through nonbasic variables to
+     * determine entering variable *)
     let rec find_e (non_lst: int list): int option = 
       let (row_length, first_row) = get_row mat 1 in 
         match non_lst with 
@@ -137,34 +150,34 @@ struct
           | Greater -> 
             if (check_col hd) then (Some hd) 
             else find_e tl 
-          | Less | Equal -> find_e tl in
-  
-   match find_e (List.sort compare non) with 
-   | None -> 
-     if not(check_row 1) then 
-      let solution = get_elt mat (1,p) in
-      (solution,s)
-     else raise (Failure "unbounded: no solution")
-   | Some e -> 
-     (* Helper function to find the greatest constraint *)
-     let min_index (arr_b : elt array) (arr_c : elt array) : int = 
-       let rec index (i:int) (min:int) (min_elt: elt option): int = 
-         if i < n then
-           match Elts.compare arr_b.(i) Elts.zero with
-           | Less | Equal -> index (i+1) min min_elt  
-           | Greater ->
-             let curr_div = Elts.divide arr_c.(i) arr_b.(i) in
-             match min_elt with
-             | None -> index (i+1) i (Some curr_div)
-             | Some prev_div ->
-               match Elts.compare curr_div prev_div with
-               | Less  -> index (i+1) i (Some curr_div)
-               | Equal | Greater -> index (i+1) min min_elt 
-         else (* we've reached the end *)
-           min+1 (* matrices are NOT zero indexed *)in
-       match index 1 0 None with 
-       | 1 -> raise (Failure "Could not find min_index.")
-       | i -> i in
+          | Less | Equal -> find_e tl in (* end find_e *)
+
+        match find_e (List.sort compare non) with 
+        | None -> 
+         if not(check_row 1) then 
+          let solution = get_elt mat (1,p) in
+          (solution,s)
+         else raise (Failure "unbounded: no solution")
+        | Some e -> 
+         (* Helper function to find the greatest constraint *)
+         let min_index (arr_b : elt array) (arr_c : elt array) : int = 
+           let rec index (i:int) (min:int) (min_elt: elt option): int = 
+             if i < n then
+               match Elts.compare arr_b.(i) Elts.zero with
+               | Less | Equal -> index (i+1) min min_elt  
+               | Greater ->
+                 let curr_div = Elts.divide arr_c.(i) arr_b.(i) in
+                 match min_elt with
+                 | None -> index (i+1) i (Some curr_div)
+                 | Some prev_div ->
+                   match Elts.compare curr_div prev_div with
+                   | Less  -> index (i+1) i (Some curr_div)
+                   | Equal | Greater -> index (i+1) min min_elt 
+             else (* we've reached the end *)
+               min+1 (* matrices are NOT zero indexed *)in
+           match index 1 0 None with 
+           | 1 -> raise (Failure "Could not find min_index.")
+           | i -> i in
      
      (* gets our entering column *)
      let (len1,column) = get_column mat e in
@@ -177,7 +190,7 @@ struct
      (* finds the row with the maximum constraint *)
      let row_index = min_index column last in
 
-     (* Finds the leaving variable *)
+     (* Helper function which finds the leaving variable *)
      let rec find_leaving (lst: int list) : int option =
        match lst with
        | [] -> None
@@ -194,11 +207,11 @@ struct
      let s' = pivot s e l in 
      simple_solve s'  
 
-  (* 
-     determines whether given matrix is feasible or not, returns None if not
-     feasible. If feasible, it will return a system where the basic solution 
-     is feasible 
-  *)
+     (* end of simple_solve *)
+
+  (* determines whether given matrix is feasible or not, returns None if not
+   * feasible. If feasible, it will return a system where the basic solution is
+   * feasible *)
   let initialize_simplex (mat: matrix) : system option = 
     let elts_neg_one = Elts.subtract Elts.zero Elts.one in
     let (m,n) = get_dimensions mat in 
@@ -207,18 +220,19 @@ struct
     (* finds the least constant b and returns its index *)
     let rec get_min_b (min_index:int) (i:int): int = 
       if i < m then 
+        (* Arrays are 0-indexed *)
         match Elts.compare b_col.(i) b_col.(min_index) with 
 	     | Less -> get_min_b i (i+1)
 	     | Equal | Greater -> get_min_b min_index (i+1)
       else 
        min_index
-    in 
+    in (* end get_min_b *)
     let min_index = get_min_b 1 1 in 
-    
+
     (* if the least b is greater than or equal to 0 no modification is 
-       needed. If it is less than 0, need to add an additional
-       slack variable and pivot so that the solution is 
-       feasible *)
+     * needed. If it is less than 0, need to add an additional
+     * slack variable and pivot so that the solution is 
+     * feasible *)
     match Elts.compare b_col.(min_index) Elts.zero with 
     | Greater | Equal -> 
       ( let dimx,dimy = m, m+n in
@@ -240,8 +254,9 @@ struct
        set_column new_mat dimy col; 
        
        (* returns system *)
-       Some (new_mat, ((generate_list 1 (n-1)), (generate_list (n) (dimy-1))))
-      )
+       Some (new_mat, ((generate_list 1 (n-1)), (generate_list (n) (n+m-2))))
+      ) (* end of Greater | Equal case *)
+
     | Less -> 
       (* creates new m by m+n matrix with an additional slack variable. 
          The objective function is now minimizing x_{m+n-1}, the slack variable
@@ -280,17 +295,11 @@ struct
       (* We pivot once to return a solvable system *)
       let pivoted_new_sys = pivot new_sys (dimy-1) (min_index+n-1) in
 
-      let (test,(test1,test2)) = break_system pivoted_new_sys in
-      print test;
-      List.iter (fun x -> print_string (string_of_int x)) test1;
-
       (* We solve the system, returning the value and the new system *)
       let elt, s' = simple_solve pivoted_new_sys in
 
       (* Breaking our returned system because we need access to non and basic *)
       let (m',(non',basic')) = break_system s' in
-              let _ = print m' in
-        let _ = List.iter (fun x -> print_string (string_of_int x)) basic' in
 
       (* If the solution to our pivoted system is not zero, then our original 
        * system is unfeasable, so return None  *)
@@ -315,9 +324,6 @@ struct
       	  else 
       	    s' in
       	let (mat',(non_fin,basic_fin)) = break_system correct_system in
-        let _ = print mat' in
-        let _ = List.iter (fun x -> print_string (string_of_int x)) basic_fin in
-        let _ = List.iter (fun x -> print_string (string_of_int x)) non_fin in
       	let final_matrix = empty m (dimy-1) in
       	for c = 1 to n+m-1 do
       	  if c < dimy-1 then
@@ -345,9 +351,6 @@ struct
             else (* hd < dimy - 1 *) hd::filter_and_decrease tl in
         let basic_fin = filter_and_decrease basic_fin in 
 
-        let _ = print final_matrix in
-        let _ = List.iter (fun x -> print_string (string_of_int x)) basic_fin in
-
       	let skip_find_one_index (arr: elt array) (start: int) : int =
       	  let rec helper (i: int) : int =
             if i < m then
@@ -367,6 +370,8 @@ struct
       	    substitute tl in
       	let _ = substitute basic_fin in
             Some (final_matrix,(non_fin,basic_fin))
+
+ (* End initialize_simplex *)
  
   let load_matrix (m: matrix) : system option =
     initialize_simplex m 
@@ -446,7 +451,7 @@ struct
     match line with
     | "min" | "min\r" -> 
       (* Our algorithm minimizes by default, so this is moving all the 
-	 constraints to the other side *)
+     constraints to the other side *)
       let neg_one = Elts.subtract Elts.zero Elts.one in
       let obj_lst = special_map (Elts.multiply neg_one) (load_objective chan) in
       let cons_lsts = load_constraints chan in
@@ -470,6 +475,17 @@ struct
 
   let solve (s: system) : elt =
     let (elt,_) = simple_solve s in elt
+
+  let print_system (s: system) : unit =
+    let m,(n,b) = break_system s in
+    print m;
+    print_string "\nBasic Variables: ";
+    let print_l = List.iter (fun x -> print_string ((string_of_int x) ^ " ")) in
+    print_l b;
+    print_string "\nNon-Basic Variables: ";
+    print_l n;
+    ()
+
 
   let run_tests times = ()
  
