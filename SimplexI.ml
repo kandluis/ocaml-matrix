@@ -146,7 +146,7 @@ struct
         match non_lst with 
         | [] -> None
         | hd::tl -> 
-          match Elts.compare first_row.(hd) Elts.zero with 
+          match Elts.compare first_row.(hd-1) Elts.zero with 
           | Greater -> 
             if (check_col hd) then (Some hd) 
             else find_e tl 
@@ -264,6 +264,8 @@ struct
 
        (* returns system *)
        Some (new_mat, ((generate_list 1 (n-1)), (generate_list (n) (n+m-2))))
+    
+       
       ) (* end of Greater | Equal case *)
 
     | Less -> 
@@ -271,7 +273,7 @@ struct
          The objective function is now minimizing x_{m+n-1}, the slack variable
       *)
       (* debug *)
-      print_string "Less :(";
+      print_string "Less!!!";
       let dimx, dimy = m, m+n in
       let new_mat = empty dimx dimy in 
       
@@ -306,6 +308,10 @@ struct
       
       (* We pivot once to return a solvable system *)
       let pivoted_new_sys = pivot new_sys (dimy-1) (min_index+n-1) in
+
+      (* debug to print out debug_mat *)
+      let (debug_mat, _) = break_system pivoted_new_sys in 
+      print debug_mat;
 
       (* We solve the system, returning the value and the new system *)
       let elt, s' = simple_solve pivoted_new_sys in
