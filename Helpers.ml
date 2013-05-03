@@ -1,5 +1,8 @@
 open Elts
 
+(* Takes in a string and a separator, and separates the string into a list of
+ * substrings where each substring is between two separators or between a
+ * separator and the beginning/end of the string *)
 let explode (s: string) (space: string) : string list =
   let rec build (curr: string) (buffer: string) (lst: string list) : string list =
     let len = String.length curr in

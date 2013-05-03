@@ -69,7 +69,7 @@ sig
   (* Function to make over our matrices *)
   val map : (elt -> elt) -> matrix -> matrix
 
-  val iter : (elt -> unit) -> 
+  val iter : (elt -> unit) -> matrix -> unit
 
   (* Returns the LUP decomposition of a matrix *)
   val lu_decomposition : matrix -> (matrix * matrix * matrix) * int
@@ -90,8 +90,10 @@ sig
   val run_tests : int -> unit
 
   (************** Input/ Output Functions *************)
+  (* Generates a matrix from a string. *)
   val load : string -> matrix
 
+  (* Dumps a matrix to a text file whose file name is specified by the string *)
   val dump : string -> matrix -> unit
 
   (********** Specific for Simplex Algorithm ***********)
