@@ -487,6 +487,7 @@ struct
     done;
     (dim,m)
 
+  (* Finds the index of the maximum value of an array *)
   let find_max_index (arr: elt array) (start_index : int) : int =
     let rec find_index (max_index: int) (curr_index: int) = 
       if curr_index = Array.length arr then max_index+1
