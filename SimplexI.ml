@@ -242,7 +242,7 @@ struct
       let obj_lst = load_objective chan in
       let cons_lsts = load_constraints chan in
       obj_lst::cons_lsts 
-    | _ -> raise (ImproperInput line) 
+    | _ -> raise (ImproperInput "Missing \"min\" or \"max\" on line 1") 
 
   let load_data (file: string) : matrix =
     try
