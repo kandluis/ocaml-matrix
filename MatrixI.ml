@@ -48,9 +48,6 @@ sig
 
   (* Returns the inverse of a matrix *) 
   val inverse: matrix -> matrix
-    
-  (* Returns the norm of the matrix *)
-  val norm: matrix -> elt
 
   (*Transposes a matrix. If the input has dimensions m x n, the output will
    * have dimensions n x m *)
@@ -69,22 +66,16 @@ sig
   val mult: matrix -> matrix -> matrix
 
   (**** Other Library Functions ***)
+  (* Function to make over our matrices *)
+  val map : (elt -> elt) -> matrix -> matrix
+
+  val iter : (elt -> unit) -> 
+
   (* Returns the LUP decomposition of a matrix *)
   val lu_decomposition : matrix -> (matrix * matrix * matrix) * int
 
   (* Returns the determinant of the matrix *) 
   val determinant: matrix -> elt
-
-  (* Will implement this algorithm based on a description in Hubbard. Involves
-   * column reducing the input (or row-reducing the transpose) and then keeping
-   * track of the operations to build a sequence of coefficients to multiply *)
-
-  (* Returns a list of eigenvalues and eigenvectors of a matrix *)
-  val eigen: matrix -> (elt *matrix) list option
-
-  (* Calculates successive powers of the input matrix, each multiplied by the
-   * same basis vector. Generates a polynomial and solves for zeros, which
-   * yields eigenvalues. Repeat for all basis vectors *)
 
   (* Takes a string and builds a matrix from it *) 
   val from_string : string -> matrix

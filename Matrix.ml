@@ -1,8 +1,6 @@
 open Order
 open Elts
 
-exception TODO
-
 (* We don't specify a type so we can generilize this to both the library
  * and the SimplexMatrix module. We don't want simplex having access too 
  * anything more than what it needs - following our obfuscation model *)
