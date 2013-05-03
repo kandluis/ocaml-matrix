@@ -1,5 +1,8 @@
 module type ORDERED_AND_OPERATIONAL =
 sig
+
+  exception NonElt
+
   type t
 
   val zero : t

@@ -4,6 +4,8 @@
 module Floats : EltsI.ORDERED_AND_OPERATIONAL =
 struct
 
+  exception NonElt
+
   type t = float
   
   let epsilon = 0.000001
@@ -26,7 +28,11 @@ struct
   
   let to_string = string_of_float
 
-  let from_string = float_of_string
+  let from_string (x: string) = 
+    try
+      float_of_string x
+    with
+    | Failure ("float_of_string") -> raise NonElt
 
   let add = (+.)
 

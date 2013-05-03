@@ -6,13 +6,18 @@ open EltMatrix
 module type SIMPLEX =
 sig
 
+  (* Special exception to provide more information to the user *)
+  exception ImproperInput of string
+
+  (* This is a Simplex system *)
   type system
+
 
   val make_system : matrix -> (int list * int list) -> system
 
   val break_system : system -> matrix * (int list * int list)
 
-  (*val load : string -> system*)
+  val load_data : string -> matrix
  
   val solve : system -> elt option
   
@@ -22,6 +27,8 @@ end
 
 module Simplex: SIMPLEX =
 struct
+
+  exception ImproperInput of string
 
   type system = matrix * (int list * int list)
 
@@ -122,13 +129,9 @@ struct
                      ((generate_list 1 (n-1)), (generate_list (n) (n+m-1)))) in 
       
       let pivoted_new_sys = pivot new_sys 
-      
-      
-      
-    
-
-
-  let pivot (s: system) (l:int) : system =
+     
+  
+  let pivot (s: system) (e:int) : system =
     (* extracting information from the system *)
     let (mat,(non,basic)) = break_system s in
 
@@ -155,8 +158,8 @@ struct
       | 1 -> raise (Failure "Could not find min_index.")
       | i -> i in
 
-    (* gets our leaving column *)
-    let (len1,column) = get_column mat l in
+    (* gets our entering column *)
+    let (len1,column) = get_column mat e in
 
     (* gets our constants column *)
     let (len2,last) = get_column mat p in  
@@ -166,34 +169,34 @@ struct
     (* finds the row with the maximum constraint *)
     let row_index = min_index column last in
 
-    (* Finds the entering variable *)
-    let rec find_entering (lst: int list) : int option =
+    (* Finds the leaving variable *)
+    let rec find_leaving (lst: int list) : int option =
       match lst with
       | [] -> None
       | hd::tl -> 
         let elt = get_elt mat (row_index,hd) in
         match Elts.compare elt Elts.one with
         | Equal -> Some hd
-        | Less | Greater -> find_entering tl in
-    let e =
-      match find_entering basic with
+        | Less | Greater -> find_leaving tl in
+    let l =
+      match find_leaving basic with
       | None -> raise (Failure "Could not find entering variable")
       | Some x -> x in
 
     (* scales our constraint row *)
-    let piv = get_elt mat (row_index, l) in
+    let piv = get_elt mat (row_index, e) in
     let _ = scale_row mat row_index (Elts.divide Elts.one piv) in
     
-    (* zeros out our leaving column *)
+    (* zeros out our entering column *)
     for i = 1 to n do
       if i <> row_index then
-  sub_mult mat i row_index (get_elt mat (i, l))
+  sub_mult mat i row_index (get_elt mat (i, e))
       else ()
     done;
 
     (* modify the set *)
-    let basic' = l::(List.filter (fun x -> x <> e) basic) in
-    let non' = e::(List.filter (fun x -> x <> l) non) in
+    let basic' = e::(List.filter (fun x -> x <> l) basic) in
+    let non' = l::(List.filter (fun x -> x <> e) non) in
     (mat,(non',basic'))
 
   let run_tests times = ()
@@ -230,8 +233,8 @@ struct
         else false in 
       has_pos 0 row in 
 
-    (* recursively loops through non to determine leaving variable *)
-    let rec find_l (non_lst: int list): int option = 
+    (* recursively loops through non to determine entering variable *)
+    let rec find_e (non_lst: int list): int option = 
       let (row_length, first_row) = get_row mat 1 in 
         match non_lst with 
         | [] -> None
@@ -239,15 +242,110 @@ struct
           match Elts.compare first_row.(hd) Elts.zero with 
           | Greater -> 
             if (check_col hd) then (Some hd) 
-            else find_l tl 
-          | Less | Equal -> find_l tl in
+            else find_e tl 
+          | Less | Equal -> find_e tl in
   
-   match find_l non with 
+   match find_e (List.sort compare non) with 
    | None -> 
-     if not(check_row 1) then (Some (get_elt mat (1,p)))
+     if not(check_row 1) then 
+      let solution = get_elt mat (1,p) in
+      let _ = Elts.print solution in
+      Some solution
      else raise (Failure "unbounded: no solution")
    | Some x -> 
      let s' = pivot s x in 
-     solve s'     
+     solve s'  
+
+  (* Some nice wrapping to provide more descriptive error handling *)
+  let read_elt (s: string) : elt =
+    try 
+      Elts.from_string s 
+    with
+    | Elts.NonElt ->
+      raise (ImproperInput "You must input valid constraint Elts!")
+
+  (* Assumes that the channel passed in is at the point of loading the objective
+   * and attempts to load the following line as an objective function int an 
+   * elt list. Raises ImproperInput if it encounters a non-elt value *)
+  let load_objective (chan: in_channel) : elt list = 
+    let line = input_line chan in
+    let line_list = Helpers.explode line "," in
+    List.map read_elt line_list
+  
+  (* Loads one constraint from the exploded string list of elements
+   * Returns a string * elt list. Returns the constraint and the elt list *)  
+  let rec load_constraint (lst: string list) : (string option * elt list) =
+    match lst with
+    | [] -> (None,[])
+    | hd::tl ->
+      match load_constraint tl with
+      | (None,elts) -> 
+        (match hd with 
+        | "<=" | ">=" | "=" -> (Some hd, elts)
+        | s -> (None, (read_elt s)::elts))
+      | (Some v, elts) -> 
+        match hd with
+        | "<=" | ">=" | "=" -> raise (ImproperInput "Constraint mismatch!")
+        | s -> (Some v, (read_elt s)::elts)
+
+  (* Assumes that the channel passed in is at the point of loading the 
+   * constraints. Reads one line at a time, adding it to an elt list list
+   * until the end of the file is reached. *)
+  let load_constraints (chan: in_channel) : elt list list =
+    let rec load (built: elt list list) : elt list list =
+      let line = input_line chan in
+      let line_list = Helpers.explode line "," in
+      match load_constraint line_list with
+      | None, _ -> raise (ImproperInput "Constraint mismatch!")
+      | Some s, elt_lst ->
+        let neg_one = Elts.subtract Elts.zero Elts.one in
+        if s = "<=" then load (elt_lst::built)
+        else if s = ">=" then 
+          load ((List.map (Elts.multiply neg_one) elt_lst)::built)
+        else if s = "=" then 
+          let neg_lst = List.map (Elts.multiply neg_one) elt_lst in
+          load (elt_lst::neg_lst::built)
+        else
+          raise (Failure "Code went awry!") in
+    let line = String.lowercase (input_line chan) in
+    match line with
+    | "subject to" | "subject to\r" -> load []
+    | _ -> raise (ImproperInput line)
+    
+
+  (* Applies f to every element of the list except the last one *)
+  let rec special_map (f: 'a -> 'a) (lst: 'a list) : 'a list =
+    match lst with
+    | [] -> []
+    | hd::[] -> hd::[]
+    | hd::tl -> (f hd)::(special_map f tl)
+
+  (* Reads the data from an input stream and returns a list list 
+   * with the right values for Simplex. ie, it flips signs and 
+   * if maximizing *)
+  let read_data (chan: in_channel) : (elt list list) =
+    let line = String.lowercase (input_line chan) in
+    match line with
+    | "min" | "min\r" -> 
+      (* Our algorithm minimizes by default, so this is moving all the constraints
+       * to the other side *)
+      let neg_one = Elts.subtract Elts.zero Elts.one in
+      let obj_lst = special_map (Elts.multiply neg_one) (load_objective chan) in
+      let cons_lsts = load_constraints chan in
+      obj_lst::cons_lsts
+    | "max" | "max\r" ->
+      let obj_lst = load_objective chan in
+      let cons_lsts = load_constraints chan in
+      obj_lst::cons_lsts 
+    | _ -> raise (ImproperInput "Missing \"min\" or \"max\" on line 1") 
+
+  let load_data (file: string) : matrix =
+    try
+      let chan = open_in file in
+      let input_list = read_data chan in
+      from_list input_list
+    with
+      | Sys_error e -> raise(Failure e)
+
  
 end
