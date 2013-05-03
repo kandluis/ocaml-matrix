@@ -50,7 +50,7 @@ sig
   val inverse: matrix -> matrix
     
   (* Returns the norm of the matrix *)
-  val norm: matrix -> elt
+  (* val norm: matrix -> elt *)
 
   (*Transposes a matrix. If the input has dimensions m x n, the output will
    * have dimensions n x m *)
@@ -80,7 +80,7 @@ sig
    * track of the operations to build a sequence of coefficients to multiply *)
 
   (* Returns a list of eigenvalues and eigenvectors of a matrix *)
-  val eigen: matrix -> (elt *matrix) list option
+  (* val eigen: matrix -> (elt *matrix) list option *)
 
   (* Calculates successive powers of the input matrix, each multiplied by the
    * same basis vector. Generates a polynomial and solves for zeros, which
@@ -99,8 +99,10 @@ sig
   val run_tests : int -> unit
 
   (************** Input/ Output Functions *************)
+  (* Generates a matrix from a string. *)
   val load : string -> matrix
 
+  (* Dumps a matrix to a text file whose file name is specified by the string *)
   val dump : string -> matrix -> unit
 
   (********** Specific for Simplex Algorithm ***********)

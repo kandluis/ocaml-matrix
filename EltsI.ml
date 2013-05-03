@@ -1,22 +1,25 @@
 module type ORDERED_AND_OPERATIONAL =
 sig
 
+  (* Exception for from_string. Is raised when from_string is passed something
+   * that is not an elt *)
   exception NonElt
 
   type t
 
+  (* The zero element *)
   val zero : t
 
+  (* The one element *)
   val one: t
 
   val compare : t -> t -> Order.order
 
-
   (* Converts a t to a string *)
   val to_string : t -> string
 
+  (* Converts a string to a t *)
   val from_string : string -> t
-
 
   val add: t -> t -> t
 
@@ -43,10 +46,12 @@ sig
   (* Generates a t in between the two arguments. Returns none if none exist *)
   val generate_between: t -> t -> unit -> t option
 
-  (* Special test function specifically for float*)
+  (* Special test function specifically for float. When passed in a float x,
+   * generates an abstract float *)
   val generate_x: float -> unit -> t 
 
-  (* Specfial funtion to test *)
+  (* Special function for testing. Generates a random t between the zero element
+   * and the bound (the argument) inclusive *)
   val generate_random : float -> unit -> t
 
   val run_tests : int -> unit
