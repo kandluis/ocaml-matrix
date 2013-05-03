@@ -146,7 +146,7 @@ struct
     | None -> 
       if not(check_row 1) then 
         let solution = get_elt mat (1,p) in
-        let _ = Elts.print solution in
+        let _ = Elts.print solution; print_char "\n" in
         (solution,s)
       else raise (Failure "unbounded: no solution")
     | Some e -> 
