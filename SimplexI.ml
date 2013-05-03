@@ -228,6 +228,9 @@ struct
        min_index
     in (* end get_min_b *)
     let min_index = get_min_b 1 1 in 
+    
+    (* Debug *)
+    print_int min_index;
 
     (* if the least b is greater than or equal to 0 no modification is 
      * needed. If it is less than 0, need to add an additional
@@ -235,7 +238,9 @@ struct
      * feasible *)
     match Elts.compare b_col.(min_index) Elts.zero with 
     | Greater | Equal -> 
-      ( let dimx,dimy = m, m+n in
+      ( 
+        print_string "It's greater orequal !!!";
+        let dimx,dimy = m, (m+n-1) in
         let new_mat = empty dimx dimy in 
        (* copies the coefficients of the constraint functions and objective 
           function into the new matrix *)
@@ -261,6 +266,7 @@ struct
       (* creates new m by m+n matrix with an additional slack variable. 
          The objective function is now minimizing x_{m+n-1}, the slack variable
       *)
+      print_string "Less :(";
       let dimx, dimy = m, m+n in
       let new_mat = empty dimx dimy in 
       
