@@ -30,7 +30,104 @@ struct
 
   let break_system (s: system) : matrix * (int list * int list) =
     let (m,(lst1,lst2)) = s in (m,(lst1,lst2)) 
-  
+
+  (* 
+     helper function to generate int list from a to b, inclusive
+     returns empty list if a > b 
+  *)
+  let rec generate_list (a:int) (b:int) : int list = 
+    match a <= b with 
+    | true -> a::(generate_list (a+1) b) 
+    | false -> [] 
+
+  (* 
+     determines whether given matrix is feasible or not, returns None if not
+     feasible. If feasible, it will return a system where the basic solution 
+     is feasible 
+  *)
+  let initialize_simplex (mat: matrix) : system option = 
+    let elts_neg_one = Elts.substract Elts.zero Elts.one in
+    let (m,n) = get_dimensions mat in 
+    let b_col = get_column mat n in 
+
+    (* finds the least constant b and returns its index *)
+    let rec get_min_b (min_index:int) (i:index): int = 
+      if i <= n then 
+        match Elts.compare b_col.(i) b_col.(min_index) with 
+	| Less -> get_min_b i (i+1)
+	| Equal | Greater -> get_min_b min_index (i+1)
+      else 
+       min_index 
+    in 
+    let min_index = get_min_b 0 0 in 
+    
+    (* if the least b is greater than or equal to 0 no modification is 
+       needed. If it is less than 0, need to add an additional
+       slack variable and pivot so that the solution is 
+       feasible *)
+    match Elts.compare b_col.(min_index) Elts.zero with 
+    | Greater | Equal -> 
+      (let new_mat = empty m (m+n-1) in 
+       (* copies the coefficients of the constraint functions and objective 
+          function into the new matrix *)
+       for c = 1 to n-1 do 
+         let (_, col) = get_column mat c in
+         set_column new_mat c col 
+       done;
+       
+       (* creates an identity matrix for the m-1 introduced slack variables *)
+       for r = 2 to m do 
+         set_elt new_mat r (n+r-2) Elts.one
+       done; 
+       
+       (* copies the constants b_i's into the last column of the new matrix *)
+       let (_, col) = get_column mat n in 
+       set_column new_mat (m+n-1) col 
+       
+       (* returns system *)
+       (new_mat, ((generate_list 1 (n-1)), (generate_list (n) (n+m-2))))
+      )
+    | Less -> 
+      (* creates new m by m+n matrix with an additional slack variable. 
+         The objective function is now minimizing x_{m+n-1}, the slack variable
+      *)
+      let new_mat = empty m (m+n) in 
+      
+      (* copies the coefficients of the constraint functions and objective 
+         function into the new matrix *)      
+      for c = 1 to n do 
+        let (_, col) = get_column mat c in
+        set_column new_mat c col 
+      done;
+      
+      (* create an identity matrix for the m-1 slack variables *)
+      for r = 2 to m do 
+        set_elt new_mat r (n+r-2) Elts.one
+      done; 
+      
+      (* copies the constants b_i's into the last column of the new matrix *)
+      let (_, col) = get_column mat n in 
+      set_column new_mat (m+n) col 
+      
+      (* set the m+n-1 column to be -1 *)
+      set_column new_mat (m+n-1) (Array.make m (elts_neg_one)); 
+      
+      (* changing the objective function to be minimizing x_{m+n-1} by setting
+         the first column to be (0, 0, 0, ..., -1, 0) *)
+      let first_row = Array.make (m+n) (Elts.zero)in 
+      first_row.(m+n-1) <- elts_neg_one;  
+      set_row new_mat 1 first_row; 
+      
+      let new_sys = (new_mat, 
+                     ((generate_list 1 (n-1)), (generate_list (n) (n+m-1)))) in 
+      
+      let pivoted_new_sys = pivot new_sys 
+      
+      
+      
+    
+
+
   let pivot (s: system) (l:int) : system =
     (* extracting information from the system *)
     let (mat,(non,basic)) = break_system s in
@@ -109,7 +206,8 @@ struct
     (* We need this to be accessible everywhere *)
     let (n,p) = get_dimensions mat in
 
-    (* checks to see if the column of a given index contains at least one positive value *)
+    (* checks to see if the column of a given index contains at least one 
+       positive value *)
     let check_col (x:int): bool = 
       let (height_col, col) = get_column mat x in
       let rec has_pos (i:int) (arr_x: elt array): bool = 
@@ -120,7 +218,8 @@ struct
         else false in 
       has_pos 1 col in 
 
-    (* checks to see if the row of a given index contains at least one positive value *)
+    (* checks to see if the row of a given index contains at least one positive 
+       value *)
     let check_row (x:int): bool = 
       let (height_row, row) = get_row mat x in
       let rec has_pos (i:int) (arr_x: elt array): bool = 
