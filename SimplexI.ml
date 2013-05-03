@@ -6,13 +6,18 @@ open EltMatrix
 module type SIMPLEX =
 sig
 
+  (* Special exception to provide more information to the user *)
+  exception ImproperInput of string
+
+  (* This is a Simplex system *)
   type system
+
 
   val make_system : matrix -> (int list * int list) -> system
 
   val break_system : system -> matrix * (int list * int list)
 
-  (*val load_system : string -> system*)
+  val load_data : string -> matrix
  
   val solve : system -> elt option
   
@@ -22,6 +27,8 @@ end
 
 module Simplex: SIMPLEX =
 struct
+
+  exception ImproperInput of string
 
   type system = matrix * (int list * int list)
 
@@ -152,6 +159,98 @@ struct
      else raise (Failure "unbounded: no solution")
    | Some x -> 
      let s' = pivot s x in 
-     solve s'     
+     solve s'  
+
+  (* Some nice wrapping to provide more descriptive error handling *)
+  let read_elt (s: string) : elt =
+    try 
+      Elts.from_string s 
+    with
+    | Elts.NonElt ->
+      raise (ImproperInput "You must input valid constraint Elts!")
+
+  (* Assumes that the channel passed in is at the point of loading the objective
+   * and attempts to load the following line as an objective function int an 
+   * elt list. Raises ImproperInput if it encounters a non-elt value *)
+  let load_objective (chan: in_channel) : elt list = 
+    let line = input_line chan in
+    let line_list = Helpers.explode line "," in
+    List.map read_elt line_list
+  
+  (* Loads one constraint from the exploded string list of elements
+   * Returns a string * elt list. Returns the constraint and the elt list *)  
+  let rec load_constraint (lst: string list) : (string option * elt list) =
+    match lst with
+    | [] -> (None,[])
+    | hd::tl ->
+      match load_constraint tl with
+      | (None,elts) -> 
+        (match hd with 
+        | "<=" | ">=" | "=" -> (Some hd, elts)
+        | s -> (None, (read_elt s)::elts))
+      | (Some v, elts) -> 
+        match hd with
+        | "<=" | ">=" | "=" -> raise (ImproperInput "Constraint mismatch!")
+        | s -> (Some v, (read_elt s)::elts)
+
+  (* Assumes that the channel passed in is at the point of loading the 
+   * constraints. Reads one line at a time, adding it to an elt list list
+   * until the end of the file is reached. *)
+  let load_constraints (chan: in_channel) : elt list list =
+    let rec load (built: elt list list) : elt list list =
+      let line = input_line chan in
+      let line_list = Helpers.explode line "," in
+      match load_constraint line_list with
+      | None, _ -> raise (ImproperInput "Constraint mismatch!")
+      | Some s, elt_lst ->
+        let neg_one = Elts.subtract Elts.zero Elts.one in
+        if s = "<=" then load (elt_lst::built)
+        else if s = ">=" then 
+          load ((List.map (Elts.multiply neg_one) elt_lst)::built)
+        else if s = "=" then 
+          let neg_lst = List.map (Elts.multiply neg_one) elt_lst in
+          load (elt_lst::neg_lst::built)
+        else
+          raise (Failure "Code went awry!") in
+    let line = String.lowercase (input_line chan) in
+    match line with
+    | "subject to" | "subject to\r" -> load []
+    | _ -> raise (ImproperInput line)
+    
+
+  (* Applies f to every element of the list except the last one *)
+  let rec special_map (f: 'a -> 'a) (lst: 'a list) : 'a list =
+    match lst with
+    | [] -> []
+    | hd::[] -> hd::[]
+    | hd::tl -> (f hd)::(special_map f tl)
+
+  (* Reads the data from an input stream and returns a list list 
+   * with the right values for Simplex. ie, it flips signs and 
+   * if maximizing *)
+  let read_data (chan: in_channel) : (elt list list) =
+    let line = String.lowercase (input_line chan) in
+    match line with
+    | "min" | "min\r" -> 
+      (* Our algorithm minimizes by default, so this is moving all the constraints
+       * to the other side *)
+      let neg_one = Elts.subtract Elts.zero Elts.one in
+      let obj_lst = special_map (Elts.multiply neg_one) (load_objective chan) in
+      let cons_lsts = load_constraints chan in
+      obj_lst::cons_lsts
+    | "max" | "max\r" ->
+      let obj_lst = load_objective chan in
+      let cons_lsts = load_constraints chan in
+      obj_lst::cons_lsts 
+    | _ -> raise (ImproperInput line) 
+
+  let load_data (file: string) : matrix =
+    try
+      let chan = open_in file in
+      let input_list = read_data chan in
+      from_list input_list
+    with
+      | Sys_error e -> raise(Failure e)
+
  
 end
