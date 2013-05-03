@@ -18,11 +18,19 @@ sig
 
   val load_file : string -> system option
 
+  val load_data : string -> matrix
+
+  val initialize_simplex : matrix -> system option
+
+  val find_one_index : elt array -> int -> int
+
   val load_matrix : matrix -> system option
  
   val solve : system -> elt 
 
   val simple_solve : system -> elt * system
+
+  val pivot : system -> int -> int -> system
   
   val run_tests : int -> unit
 
@@ -56,12 +64,12 @@ struct
   let find_one_index (arr: elt array) (n: int) =
     let rec find (i: int) =
       if i < n then
-	match Elts.compare arr.(i) Elts.one with
-	| Equal -> i+1
-	| Greater | Less -> find (i+1)
+    	  match Elts.compare arr.(i) Elts.one with
+    	  | Equal -> i+1
+    	  | Greater | Less -> find (i+1)
       else
-	raise (Failure "Could not find the constraint!") in
-    find 0 
+      	raise (Failure "Could not find the constraint!") in
+      find 0 
  
   (* Pivots a system based on the entering and leaving variables *)
   let pivot (s: system) (e: int) (l: int) : system = 
@@ -78,15 +86,15 @@ struct
     (* zeros out our entering column *)
     for i = 1 to n do
       if i <> row_index then
-	sub_mult mat i row_index (get_elt mat (i, e))
+	     sub_mult mat i row_index (get_elt mat (i, e))
       else ()
-    done;
+    done; 
     
     (* modify the set *)
     let basic' = e::(List.filter (fun x -> x <> l) basic) in
     let non' = l::(List.filter (fun x -> x <> e) non) in
     (mat,(non',basic'))
-      
+
   (* This solves the simple Simplex case. Returns the solution and a system *)
   let rec simple_solve (s: system) : (elt * system) = 
     
@@ -112,7 +120,7 @@ struct
     let check_row (x:int): bool = 
       let (height_row, row) = get_row mat x in
       let rec has_pos (i:int) (arr_x: elt array): bool = 
-        if i < height_row then 
+        if i < height_row - 1 then 
           match Elts.compare arr_x.(i) Elts.zero with 
           | Less | Equal -> has_pos (i+1) arr_x
           | Greater -> true
@@ -135,7 +143,6 @@ struct
    | None -> 
      if not(check_row 1) then 
       let solution = get_elt mat (1,p) in
-      let _ = Elts.print solution in
       (solution,s)
      else raise (Failure "unbounded: no solution")
    | Some e -> 
@@ -199,14 +206,14 @@ struct
 
     (* finds the least constant b and returns its index *)
     let rec get_min_b (min_index:int) (i:int): int = 
-      if i <= n then 
+      if i < m then 
         match Elts.compare b_col.(i) b_col.(min_index) with 
-	| Less -> get_min_b i (i+1)
-	| Equal | Greater -> get_min_b min_index (i+1)
+	     | Less -> get_min_b i (i+1)
+	     | Equal | Greater -> get_min_b min_index (i+1)
       else 
-       min_index + 1
+       min_index
     in 
-    let min_index = get_min_b 0 0 in 
+    let min_index = get_min_b 1 1 in 
     
     (* if the least b is greater than or equal to 0 no modification is 
        needed. If it is less than 0, need to add an additional
@@ -214,7 +221,8 @@ struct
        feasible *)
     match Elts.compare b_col.(min_index) Elts.zero with 
     | Greater | Equal -> 
-      (let new_mat = empty m (m+n-1) in 
+      ( let dimx,dimy = m, m+n in
+        let new_mat = empty dimx dimy in 
        (* copies the coefficients of the constraint functions and objective 
           function into the new matrix *)
        for c = 1 to n-1 do 
@@ -229,20 +237,21 @@ struct
        
        (* copies the constants b_i's into the last column of the new matrix *)
        let (_, col) = get_column mat n in 
-       set_column new_mat (m+n-1) col; 
+       set_column new_mat dimy col; 
        
        (* returns system *)
-       Some (new_mat, ((generate_list 1 (n-1)), (generate_list (n) (n+m-2))))
+       Some (new_mat, ((generate_list 1 (n-1)), (generate_list (n) (dimy-1))))
       )
     | Less -> 
       (* creates new m by m+n matrix with an additional slack variable. 
          The objective function is now minimizing x_{m+n-1}, the slack variable
       *)
-      let new_mat = empty m (m+n) in 
+      let dimx, dimy = m, m+n in
+      let new_mat = empty dimx dimy in 
       
       (* copies the coefficients of the constraint functions and objective 
          function into the new matrix *)      
-      for c = 1 to n do 
+      for c = 1 to n -1 do 
         let (_, col) = get_column mat c in
         set_column new_mat c col 
       done;
@@ -254,110 +263,110 @@ struct
       
       (* copies the constants b_i's into the last column of the new matrix *)
       let (_, col) = get_column mat n in 
-      set_column new_mat (m+n) col; 
+      set_column new_mat dimy col; 
       
       (* set the m+n-1 column to be -1 *)
-      set_column new_mat (m+n-1) (Array.make m (elts_neg_one)); 
-      
-      (* changing the objective function to be minimizing x_{m+n-1} by setting
-         the first column to be (0, 0, 0, ..., -1, 0) *)
-      let first_row = Array.make (m+n) (Elts.zero)in 
-      first_row.(m+n-1) <- elts_neg_one;  
-      set_row new_mat 1 first_row; 
+      set_column new_mat (dimy-1) (Array.make m (elts_neg_one)); 
+
+      (* Set the top row as the new constraint *)
+      let constraint' = Array.make dimy Elts.zero in
+      constraint'.(dimy-2) <- elts_neg_one;
+      set_row new_mat 1 constraint';
       
       (* Making our new system! This is the original EXCEPT for the objective *)
       let new_sys = (new_mat, 
-                     ((generate_list 1 (n-1)), (generate_list (n) (n+m-1)))) in 
+                     ((dimy-1)::(generate_list 1 (n-1)), (generate_list (n) (dimy-2)))) in
       
       (* We pivot once to return a solvable system *)
-      let pivoted_new_sys = pivot new_sys (n+m-1) (min_index+n-2) in
+      let pivoted_new_sys = pivot new_sys (dimy-1) (min_index+n-1) in
+
+      let (test,(test1,test2)) = break_system pivoted_new_sys in
+      print test;
+      List.iter (fun x -> print_string (string_of_int x)) test1;
 
       (* We solve the system, returning the value and the new system *)
       let elt, s' = simple_solve pivoted_new_sys in
 
       (* Breaking our returned system because we need access to non and basic *)
       let (m',(non',basic')) = break_system s' in
+              let _ = print m' in
+        let _ = List.iter (fun x -> print_string (string_of_int x)) basic' in
 
       (* If the solution to our pivoted system is not zero, then our original 
        * system is unfeasable, so return None  *)
-      let (elt_new_sys, _) = simple_solve pivoted_new_sys in
-      match Elts.compare Elts.zero elt_new_sys with
+      match Elts.compare Elts.zero elt with
       | Greater | Less -> None
       | Equal -> 
-	(* Check to see if our added slack variable is a basic variable *)
-	let correct_system = 
-	  if List.mem (n+m-1) basic' then
-	    let (len,col) = get_row m' (n+m-1) in
-	    let row_index = find_one_index col len in
-	    let rec find_entering (lst: int list) :int=
-	      match lst with
-	      | [] -> raise (Failure "Could not find entering")
-	      | hd::tl ->
-		let constant = get_elt m' (row_index, hd) in
-		match Elts.compare constant Elts.zero with
-		| Equal -> find_entering tl
-		| Greater | Less -> hd in
-	    let entering = find_entering non' in
-	    pivot s' entering (n+m-1)
-	  else 
-	    s' in
-	let (mat',(non_fin,basic_fin)) = break_system correct_system in
-	let final_matrix = empty m (n+m-1) in
-	for c = 1 to n+m-1 do
-	  if c < n+m-1 then
-	    let (_,col) = get_column mat' c in
-	    set_column final_matrix c col
-	  else 
-	    let (_,col) = get_column mat' (c+1) in
-	    set_column final_matrix c col
-	done;
-	let (_,old_obj) = get_row mat 1 in
-	let slacked_obj = Array.make (n+m-1) Elts.zero in
-	for c = 1 to n-1 do
-	    slacked_obj.(c-1) <- old_obj.(c-1)
-	done;
-	slacked_obj.(n+m-2) <- old_obj.(n-1); 
-	set_row final_matrix 1 slacked_obj;
-	let skip_find_one_index (arr: elt array) (start: int) : int =
-	  let rec helper (i: int) : int =
-	    match Elts.compare arr.(i) Elts.one with
-	    | Greater | Less -> helper (i + 1)
-	    | Equal -> i + 1 in
-	  helper (start - 1) in
-	let rec substitute (lst: int list) : unit =
-	  match lst with
-	  | [] -> ()
-	  | hd::tl ->
-	    let (_,col) = get_column final_matrix hd in
-	    let row_index = skip_find_one_index col 2 in
-	    sub_mult final_matrix 1 row_index (get_elt mat (1, hd));
-	    substitute tl in
-	let _ = substitute basic_fin in
-      Some (final_matrix,(non_fin,basic_fin))
-  
- (* let pivot (s: system) (e:int) : system =
-    (* extracting information from the system *)
-    let (mat,(non,basic)) = break_system s in
+      	let correct_system = 
+          (* Check to see if our added slack variable is a non-basic variable *)
+      	  if List.mem (dimy-1) non' then
+      	    let (len,col) = get_column m' (dimy-1) in
+      	    let row_index = find_one_index col len in
+      	    let rec find_entering (lst: int list) :int=
+      	      match lst with
+      	      | [] -> raise (Failure "Could not find entering")
+      	      | hd::tl ->
+            		let constant = get_elt m' (row_index, hd) in
+            		match Elts.compare constant Elts.zero with
+            		| Equal -> find_entering tl
+            		| Greater | Less -> hd in
+            let entering = find_entering basic' in
+            pivot s' entering (dimy-1)
+      	  else 
+      	    s' in
+      	let (mat',(non_fin,basic_fin)) = break_system correct_system in
+        let _ = print mat' in
+        let _ = List.iter (fun x -> print_string (string_of_int x)) basic_fin in
+        let _ = List.iter (fun x -> print_string (string_of_int x)) non_fin in
+      	let final_matrix = empty m (dimy-1) in
+      	for c = 1 to n+m-1 do
+      	  if c < dimy-1 then
+      	    let (_,col) = get_column mat' c in
+      	    set_column final_matrix c col
+      	  else 
+      	    let (_,col) = get_column mat' (c+1) in
+      	    set_column final_matrix c col
+      	done;
+      	let (_,old_obj) = get_row mat 1 in
+      	let slacked_obj = Array.make (dimy-1) Elts.zero in
+      	for c = 1 to n-1 do
+      	    slacked_obj.(c-1) <- old_obj.(c-1)
+      	done;
+      	slacked_obj.(dimy-2) <- old_obj.(n-1); 
+      	set_row final_matrix 1 slacked_obj;
 
-    (* We need this to be accessible everywhere *)
-    let (n,p) = get_dimensions mat in
+        (* Since we removed a slack, we need to decrease our basic list *)
+        let rec filter_and_decrease (lst: int list) : int list =
+          match lst with
+          | [] -> []
+          | hd::tl ->
+            if hd = dimy-1 then filter_and_decrease tl
+            else if hd > dimy - 1 then (hd-1)::filter_and_decrease tl
+            else (* hd < dimy - 1 *) hd::filter_and_decrease tl in
+        let basic_fin = filter_and_decrease basic_fin in 
 
-    (* scales our constraint row *)
-    let piv = get_elt mat (row_index, e) in
-    let _ = scale_row mat row_index (Elts.divide Elts.one piv) in
-    
-    (* zeros out our entering column *)
-    for i = 1 to n do
-      if i <> row_index then
-	sub_mult mat i row_index (get_elt mat (i, e))
-      else ()
-    done;
+        let _ = print final_matrix in
+        let _ = List.iter (fun x -> print_string (string_of_int x)) basic_fin in
 
-    (* modify the set *)
-    let basic' = e::(List.filter (fun x -> x <> l) basic) in
-    let non' = l::(List.filter (fun x -> x <> e) non) in
-    (mat,(non',basic'))
- *)
+      	let skip_find_one_index (arr: elt array) (start: int) : int =
+      	  let rec helper (i: int) : int =
+            if i < m then
+        	    match Elts.compare arr.(i) Elts.one with
+        	    | Greater | Less -> helper (i + 1)
+        	    | Equal -> i + 1 
+            else 
+              raise (Failure "The column did not have a one!?") in
+      	  helper (start - 1) in
+      	let rec substitute (lst: int list) : unit =
+      	  match lst with
+      	  | [] -> ()
+      	  | hd::tl ->
+      	    let (_,col) = get_column final_matrix hd in
+      	    let row_index = skip_find_one_index col 2 in
+      	    sub_mult final_matrix 1 row_index (get_elt final_matrix (1, hd));
+      	    substitute tl in
+      	let _ = substitute basic_fin in
+            Some (final_matrix,(non_fin,basic_fin))
  
   let load_matrix (m: matrix) : system option =
     initialize_simplex m 
