@@ -118,35 +118,28 @@ struct
     let (n,p) = get_dimensions mat in
     
     (****************** Helper functions *************)
+
+    (* Helper function to see if an array has at least one positive value *)
+    let rec has_pos (i:int) (max_i:int) (arr_x: elt array): bool = 
+      if i < max_i then 
+        match Elts.compare arr_x.(i) Elts.zero with 
+        | Less | Equal -> has_pos (i+1) max_i arr_x
+        | Greater -> true
+      else false 
+    in (* end of has_pos *)
+
     (* Helper function which checks to see if the column of a given index
      * contains at least one positive value *)
     let check_col (x:int): bool = 
       let (height_col, col) = get_column mat x in
-
-      let rec has_pos (i:int) (arr_x: elt array): bool = 
-        if i < height_col then 
-          match Elts.compare arr_x.(i) Elts.zero with 
-          | Less | Equal -> has_pos (i+1) arr_x
-          | Greater -> true
-        else false 
-      in (* end of has_pos *)
-
-      has_pos 1 col 
+      has_pos 1 height_col col 
     in (* end check_col *)
 
     (* Helper function which checks to see if the row of a given index contains
     at least one positive value *)
     let check_row (x:int): bool = 
       let (height_row, row) = get_row mat x in
-
-      let rec has_pos (i:int) (arr_x: elt array): bool = 
-        if i < height_row - 1 then 
-          match Elts.compare arr_x.(i) Elts.zero with 
-          | Less | Equal -> has_pos (i+1) arr_x
-          | Greater -> true
-        else false 
-      in 
-      has_pos 0 row 
+      has_pos 0 (height_row - 1) row 
     in (* end check_row *)
 
     (* Helper function to find the tightest constraint *)
@@ -176,25 +169,25 @@ struct
      * determine entering variable *)
     let rec find_e (non_lst: int list): int option = 
       let (row_length, first_row) = get_row mat 1 in 
-        match non_lst with 
-        | [] -> None
-        | hd::tl -> 
-          match Elts.compare first_row.(hd-1) Elts.zero with 
-          | Greater -> 
-            if (check_col hd) then (Some hd) 
-            else find_e tl 
-          | Less | Equal -> find_e tl 
+      match non_lst with 
+      | [] -> None
+      | hd::tl -> 
+        match Elts.compare first_row.(hd-1) Elts.zero with 
+        | Greater -> 
+          if (check_col hd) then (Some hd) 
+          else find_e tl 
+        | Less | Equal -> find_e tl 
     in (* end find_e *)
 
-    (* Helper function which finds the leaving variable *)
-    let rec find_leaving (lst: int list) : int option =
+    (* Helper function which finds the leaving variable in a given row *)
+    let rec find_leaving (lst: int list) (row_index: int) : int option =
       match lst with
       | [] -> None
       | hd::tl -> 
         let elt = get_elt mat (row_index,hd) in
         match Elts.compare elt Elts.one with
         | Equal -> Some hd
-        | Less | Greater -> find_leaving tl 
+        | Less | Greater -> find_leaving tl row_index
     in (* end of find_leaving *)
 
     (************** Main simple_solve code ************)
@@ -217,7 +210,7 @@ struct
       let row_index = min_index column last in
 
       let l =
-        match find_leaving basic with
+        match find_leaving basic row_index with
         | None -> raise (Failure "Could not find entering variable")
         | Some x -> x in
 
@@ -249,25 +242,25 @@ struct
        min_index
     in (* end get_min_b *)
 
-    (* Helper to find entering variable *)
-    let rec find_entering (lst: int list) : int =
+    (* Helper to find entering variable in a given row of a matrix *)
+    let rec find_entering (mat: matrix) (row: int) (lst: int list) : int =
       match lst with
       | [] -> raise (Failure "Could not find entering")
       | hd::tl ->
-        let constant = get_elt m' (row_index, hd) in
+        let constant = get_elt mat (row, hd) in
         match Elts.compare constant Elts.zero with
-        | Equal -> find_entering tl
+        | Equal -> find_entering mat row tl
         | Greater | Less -> hd 
     in (* end find_entering *)
 
     (* Helper function needs commenting *)
-    let rec filter_and_decrease (lst: int list) : int list =
+    let rec filter_and_decrease (lst: int list) (max_dim: int) : int list =
       match lst with
       | [] -> []
       | hd::tl ->
-        if hd = dimy-1 then filter_and_decrease tl
-        else if hd > dimy - 1 then (hd-1)::filter_and_decrease tl
-        else (* hd < dimy - 1 *) hd::filter_and_decrease tl 
+        if hd = (max_dim - 1) then filter_and_decrease tl max_dim
+        else if hd > (max_dim - 1) then (hd-1)::filter_and_decrease tl max_dim
+        else (* hd < dimy - 1 *) hd::filter_and_decrease tl max_dim
     in (* end of filter_and_decrease *)
 
     (* Helper function needs commenting *)
@@ -284,14 +277,14 @@ struct
     in (* end skip_find_one_index *)
 
     (* Helper function needs commenting *)
-    let rec substitute (lst: int list) : unit =
+    let rec substitute (mat: matrix) (lst: int list) : unit =
       match lst with
       | [] -> ()
       | hd::tl ->
-        let (_,col) = get_column final_matrix hd in
+        let (_,col) = get_column mat hd in
         let row_index = skip_find_one_index col 2 in
-        sub_mult final_matrix 1 row_index (get_elt final_matrix (1, hd));
-        substitute tl 
+        sub_mult mat 1 row_index (get_elt mat (1, hd));
+        substitute mat tl 
     in (* end substitute *)
 
     (************ Main initialize_simplex code ***********)
@@ -400,7 +393,7 @@ struct
           if List.mem (dimy-1) non' then
             let (len,col) = get_column m' (dimy-1) in
             let row_index = find_one_index col len in
-            let entering = find_entering basic' in
+            let entering = find_entering m' row_index basic' in
             pivot s' entering (dimy-1)
           else 
             s' in
@@ -424,10 +417,10 @@ struct
           set_row final_matrix 1 slacked_obj;
 
           (* Since we removed a slack, we need to decrease our basic list *)
-          let basic_fin = filter_and_decrease basic_fin in 
+          let basic_fin = filter_and_decrease basic_fin dimy in 
 
 
-          let _ = substitute basic_fin in
+          let _ = substitute final_matrix basic_fin in
             Some (final_matrix,(non_fin,basic_fin))
           ) (* End of Equal match case *)
       ) (* End of Less match case *)
