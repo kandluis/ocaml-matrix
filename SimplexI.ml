@@ -98,7 +98,7 @@ struct
     (* zeros out our entering column *)
     for i = 1 to n do
       if i <> row_index then
-	     sub_mult mat i row_index (get_elt mat (i, e))
+         sub_mult mat i row_index (get_elt mat (i, e))
       else ()
     done; 
     
@@ -139,6 +139,29 @@ struct
         else false in 
       has_pos 0 row in (* end check_row *)
 
+    (* Helper function to find the tightest constraint *)
+    let min_index (arr_b : elt array) (arr_c : elt array) : int = 
+      (* Helper function for min_index *)
+      let rec index (i:int) (min:int) (min_elt: elt option): int = 
+        if i < n then
+          match Elts.compare arr_b.(i) Elts.zero with
+          | Less | Equal -> index (i+1) min min_elt  
+          | Greater ->
+            let curr_div = Elts.divide arr_c.(i) arr_b.(i) in
+            match min_elt with
+            | None -> index (i+1) i (Some curr_div)
+            | Some prev_div ->
+              match Elts.compare curr_div prev_div with
+              | Less  -> index (i+1) i (Some curr_div)
+              | Equal | Greater -> index (i+1) min min_elt 
+        else (* we've reached the end *)
+          min+1 (* matrices are NOT zero indexed *)
+      in (* end of index function, continues min_index *)
+      match index 1 0 None with 
+      | 1 -> raise (Failure "Could not find min_index.")
+      | i -> i 
+    in (* end of min_index *)
+
     (* Helper function which recursively loops through nonbasic variables to
      * determine entering variable *)
     let rec find_e (non_lst: int list): int option = 
@@ -150,35 +173,16 @@ struct
           | Greater -> 
             if (check_col hd) then (Some hd) 
             else find_e tl 
-          | Less | Equal -> find_e tl in (* end find_e *)
+          | Less | Equal -> find_e tl 
+    in (* end find_e *)
 
-        match find_e (List.sort compare non) with 
-        | None -> 
-         if not(check_row 1) then 
-          let solution = get_elt mat (1,p) in
-          (solution,s)
-         else raise (Failure "unbounded: no solution")
-        | Some e -> 
-         (* Helper function to find the greatest constraint *)
-         let min_index (arr_b : elt array) (arr_c : elt array) : int = 
-           let rec index (i:int) (min:int) (min_elt: elt option): int = 
-             if i < n then
-               match Elts.compare arr_b.(i) Elts.zero with
-               | Less | Equal -> index (i+1) min min_elt  
-               | Greater ->
-                 let curr_div = Elts.divide arr_c.(i) arr_b.(i) in
-                 match min_elt with
-                 | None -> index (i+1) i (Some curr_div)
-                 | Some prev_div ->
-                   match Elts.compare curr_div prev_div with
-                   | Less  -> index (i+1) i (Some curr_div)
-                   | Equal | Greater -> index (i+1) min min_elt 
-             else (* we've reached the end *)
-               min+1 (* matrices are NOT zero indexed *)in
-           match index 1 0 None with 
-           | 1 -> raise (Failure "Could not find min_index.")
-           | i -> i in
-     
+    match find_e (List.sort compare non) with 
+    | None -> 
+      if not(check_row 1) then 
+        let solution = get_elt mat (1,p) in
+        (solution,s)
+      else raise (Failure "unbounded: no solution")
+    | Some e -> 
      (* gets our entering column *)
      let (len1,column) = get_column mat e in
      
@@ -206,8 +210,9 @@ struct
 
      let s' = pivot s e l in 
      simple_solve s'  
+     (* end of Some case *)
 
-     (* end of simple_solve *)
+  (* end of simple_solve *)
 
   (* determines whether given matrix is feasible or not, returns None if not
    * feasible. If feasible, it will return a system where the basic solution is
@@ -222,8 +227,8 @@ struct
       if i < m then 
         (* Arrays are 0-indexed *)
         match Elts.compare b_col.(i) b_col.(min_index) with 
-	     | Less -> get_min_b i (i+1)
-	     | Equal | Greater -> get_min_b min_index (i+1)
+         | Less -> get_min_b i (i+1)
+         | Equal | Greater -> get_min_b min_index (i+1)
       else 
        min_index
     in (* end get_min_b *)
@@ -239,7 +244,7 @@ struct
     match Elts.compare b_col.(min_index) Elts.zero with 
     | Greater | Equal -> 
       ( 
-	(* debug *)
+    (* debug *)
         print_string "It's greater orequal !!!";
         let dimx,dimy = m, (m+n-1) in
         let new_mat = empty dimx dimy in 
@@ -324,40 +329,40 @@ struct
       match Elts.compare Elts.zero elt with
       | Greater | Less -> None
       | Equal -> 
-      	let correct_system = 
+        let correct_system = 
           (* Check to see if our added slack variable is a non-basic variable *)
-      	  if List.mem (dimy-1) non' then
-      	    let (len,col) = get_column m' (dimy-1) in
-      	    let row_index = find_one_index col len in
-      	    let rec find_entering (lst: int list) :int=
-      	      match lst with
-      	      | [] -> raise (Failure "Could not find entering")
-      	      | hd::tl ->
-            		let constant = get_elt m' (row_index, hd) in
-            		match Elts.compare constant Elts.zero with
-            		| Equal -> find_entering tl
-            		| Greater | Less -> hd in
+          if List.mem (dimy-1) non' then
+            let (len,col) = get_column m' (dimy-1) in
+            let row_index = find_one_index col len in
+            let rec find_entering (lst: int list) :int=
+              match lst with
+              | [] -> raise (Failure "Could not find entering")
+              | hd::tl ->
+                let constant = get_elt m' (row_index, hd) in
+                match Elts.compare constant Elts.zero with
+                | Equal -> find_entering tl
+                | Greater | Less -> hd in
             let entering = find_entering basic' in
             pivot s' entering (dimy-1)
-      	  else 
-      	    s' in
-      	let (mat',(non_fin,basic_fin)) = break_system correct_system in
-      	let final_matrix = empty m (dimy-1) in
-      	for c = 1 to n+m-1 do
-      	  if c < dimy-1 then
-      	    let (_,col) = get_column mat' c in
-      	    set_column final_matrix c col
-      	  else 
-      	    let (_,col) = get_column mat' (c+1) in
-      	    set_column final_matrix c col
-      	done;
-      	let (_,old_obj) = get_row mat 1 in
-      	let slacked_obj = Array.make (dimy-1) Elts.zero in
-      	for c = 1 to n-1 do
-      	    slacked_obj.(c-1) <- old_obj.(c-1)
-      	done;
-      	slacked_obj.(dimy-2) <- old_obj.(n-1); 
-      	set_row final_matrix 1 slacked_obj;
+          else 
+            s' in
+        let (mat',(non_fin,basic_fin)) = break_system correct_system in
+        let final_matrix = empty m (dimy-1) in
+        for c = 1 to n+m-1 do
+          if c < dimy-1 then
+            let (_,col) = get_column mat' c in
+            set_column final_matrix c col
+          else 
+            let (_,col) = get_column mat' (c+1) in
+            set_column final_matrix c col
+        done;
+        let (_,old_obj) = get_row mat 1 in
+        let slacked_obj = Array.make (dimy-1) Elts.zero in
+        for c = 1 to n-1 do
+            slacked_obj.(c-1) <- old_obj.(c-1)
+        done;
+        slacked_obj.(dimy-2) <- old_obj.(n-1); 
+        set_row final_matrix 1 slacked_obj;
 
         (* Since we removed a slack, we need to decrease our basic list *)
         let rec filter_and_decrease (lst: int list) : int list =
@@ -369,25 +374,26 @@ struct
             else (* hd < dimy - 1 *) hd::filter_and_decrease tl in
         let basic_fin = filter_and_decrease basic_fin in 
 
-      	let skip_find_one_index (arr: elt array) (start: int) : int =
-      	  let rec helper (i: int) : int =
+        let skip_find_one_index (arr: elt array) (start: int) : int =
+          let rec helper (i: int) : int =
             if i < m then
-        	    match Elts.compare arr.(i) Elts.one with
-        	    | Greater | Less -> helper (i + 1)
-        	    | Equal -> i + 1 
+              match Elts.compare arr.(i) Elts.one with
+              | Greater | Less -> helper (i + 1)
+              | Equal -> i + 1 
             else 
               raise (Failure "The column did not have a one!?") in
-      	  helper (start - 1) in
-      	let rec substitute (lst: int list) : unit =
-      	  match lst with
-      	  | [] -> ()
-      	  | hd::tl ->
-      	    let (_,col) = get_column final_matrix hd in
-      	    let row_index = skip_find_one_index col 2 in
-      	    sub_mult final_matrix 1 row_index (get_elt final_matrix (1, hd));
-      	    substitute tl in
-      	let _ = substitute basic_fin in
-            Some (final_matrix,(non_fin,basic_fin))
+          helper (start - 1) in
+        let rec substitute (lst: int list) : unit =
+          match lst with
+          | [] -> ()
+          | hd::tl ->
+            let (_,col) = get_column final_matrix hd in
+            let row_index = skip_find_one_index col 2 in
+            sub_mult final_matrix 1 row_index (get_elt final_matrix (1, hd));
+            substitute tl in
+        let _ = substitute basic_fin in
+          Some (final_matrix,(non_fin,basic_fin))
+        (* End of Less match case *)
 
  (* End initialize_simplex *)
  
