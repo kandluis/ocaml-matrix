@@ -12,7 +12,7 @@ let test times =
 
 (* Prints a solution *)
 let print_solution (s) : unit =
-  let _ = print_string "Solved!\n\nOptimal value:" in
+  let _ = print_string "Solved!\n\nOptimal value: " in
   let _ = Elts.print s in
   print_string "\n"
 

@@ -140,10 +140,10 @@ struct
     let (debug_s', (debug_non, debug_basic)) = break_system s in 
     print debug_s';
     print_string "nonbasic: \n";
-    List.iter (print_int) debug_non;
+    List.iter (fun x -> print_int x; print_string " ") debug_non;
     print_string "\n";
     print_string "basic: \n";
-    List.iter print_int debug_basic;
+    List.iter (fun x -> print_int x; print_string " ") debug_basic;
     print_string "\n";
 
     let (mat,(non,basic)) = break_system s in
@@ -214,8 +214,9 @@ struct
     in (* end find_e *)
     
     (* debug *)
-    print_string "debuggin find_e, nonbasic variables are:  \n";
-    List.iter print_int non;
+    print_string "debugging find_e, nonbasic variables are:  \n";
+    List.iter (fun x -> print_int x; print_string " ";) non;
+    print_string "\n";
     if find_e (List.sort compare non) = None then print_string "Returns None\n" 
     else print_string "Doesn't return None\n";
 
@@ -263,8 +264,9 @@ struct
         | Some x -> x in
       
       (* debug print out entering leaving variable *)
-      print_string "entering, leaving:";
+      print_string "entering, leaving: ";
       print_int e;
+      print_string ",";
       print_int l;
       print_string "\n";
 
@@ -274,10 +276,10 @@ struct
       let (debug_s', (debug_non, debug_basic)) = break_system s' in 
       print debug_s';
       print_string "nonbasic: \n";
-      List.iter (print_int) debug_non;
+      List.iter (fun x -> print_int x; print_string " ";) debug_non;
       print_string "\n";
       print_string "basic: \n";
-      List.iter print_int debug_basic;
+      List.iter (fun x -> print_int x; print_string " ";) debug_basic;
       print_string "\n";
       
       
@@ -359,7 +361,9 @@ struct
     let min_index = get_min_b 1 1 in 
 
     (* debug *)
+    print_string "min_index: ";
     print_int min_index;
+    print_string "\n";
 
     (* if the least b is greater than or equal to 0 no modification is 
      * needed. If it is less than 0, need to add an additional
@@ -369,7 +373,7 @@ struct
     | Greater | Equal -> 
       ( 
       (* debug *)
-      print_string "It's greater orequal !!!";
+      print_string "It's greater or equal!!!\n";
 
       let dimx,dimy = m, (m+n-1) in
       let new_mat = empty dimx dimy in 
@@ -402,7 +406,7 @@ struct
        * The objective function is now minimizing x_{m+n-1}, the slack variable
        *)
       (* debug *)
-      print_string "Less!!!";
+      print_string "Less!!!\n";
 
       let dimx, dimy = m, m+n in
       let new_mat = empty dimx dimy in 
