@@ -40,6 +40,8 @@ sig
   
   val run_tests : int -> unit
 
+  val print_system : system -> unit
+
 end 
 
 module Simplex: SIMPLEX =
@@ -67,6 +69,17 @@ struct
     | true -> a::(generate_list (a+1) b) 
     | false -> [] 
 
+  (* Prints a system *)
+  let print_system (s: system) : unit =
+    let m,(n,b) = break_system s in
+    print m;
+    print_string "\nBasic Variables: ";
+    let print_l = List.iter (fun x -> print_string ((string_of_int x) ^ " ")) in
+    print_l b;
+    print_string "\nNon-Basic Variables: ";
+    print_l n;
+    ()
+    
   (* Helper function. Takes in an array and its length and returns the
    * Matrix (ie non-zero) index of the Elts.one location. Assumes the array
    * contains only one Elts.one *)
