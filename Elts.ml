@@ -77,4 +77,73 @@ struct
     ()
 end
 
-module Elts = Floats
+module Num_floats : EltsI.ORDERED_AND_OPERATIONAL = 
+struct
+
+  exception NonElt
+
+  type t = Num.num
+
+  let zero = Num.num_of_int 1
+
+  let one = Num.num_of_int 1
+
+  let compare a b = 
+    if Num.compare_num a b = -1 then Order.Less
+    else if Num.compare_num a b = 0 then Order.Equal
+    else if Num.compare_num a b = 1 then Order.Greater
+    else
+      raise (Failure "Error in compare.")
+
+  let to_string = Num.string_of_num
+
+  let from_string (x: string) = 
+    try
+      Num.num_of_string x
+    with
+    | Failure ("num_of_string") -> raise NonElt
+
+  let add = Num.add_num
+
+  let subtract = Num.sub_num
+
+  let multiply = Num.mult_num
+
+  let divide = Num.div_num
+
+  let generate () = Num.num_of_int 3
+
+  let generate_gt a () = Num.add_num a (Num.num_of_int 1) 
+
+  let generate_lt a () = Num.sub_num a (Num.num_of_int 1) 
+
+  let generate_between a b () = 
+    if Num.gt_num a b then None 
+    else Some (Num.div_num (Num.add_num a b) (Num.num_of_int 2))
+
+  let generate_x (x:float) () = 
+    let new_x = int_of_float x in Num.num_of_int new_x
+
+  let generate_random (bound: float) () = 
+    let new_bound = int_of_float bound in 
+    Num.num_of_int (Random.int new_bound)
+
+  let print a = print_string (to_string a)
+
+  let rec test_compare (times:int) : unit =
+    let random t = Num.num_of_int (Random.int t - Random.int t) in
+    if times = 0 then ()
+    else
+      let x, y = random times, random times in
+      match compare x y with
+      | Order.Equal -> assert(x = y)
+      | Order.Greater -> assert(x > y)
+      | Order.Less -> assert(x < y)
+
+
+  let run_tests (times: int) : unit =
+    test_compare times ;
+    ()
+end
+(* module Elts = Floats *)
+module Elts = Num_floats
