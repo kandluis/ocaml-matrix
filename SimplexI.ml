@@ -300,7 +300,7 @@ struct
       | [] -> []
       | hd::tl ->
         if hd = (max_dim - 1) then filter_and_decrease tl max_dim
-        else if hd > (max_dim - 1) then (hd-1)::filter_and_decrease tl max_dim
+        else if hd > (max_dim - 1) then (raise (Failure "hd cannot be max_dim"))
         else (* hd < dimy - 1 *) hd::filter_and_decrease tl max_dim
     in (* end of filter_and_decrease *)
 
