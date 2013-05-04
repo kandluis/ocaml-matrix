@@ -36,7 +36,7 @@ let parse_args () : unit =
     (try 
       let filename =  Sys.argv.(2) in
       (match Simplex.load_file filename with
-        | None -> (print_string "There is no feasable solution.\n")
+        | None -> (print_string "This system has no feasable solution.\n")
         | Some sys -> 
           let _ = print_string "Solving your system....\n" in
           let solution = Simplex.solve sys in

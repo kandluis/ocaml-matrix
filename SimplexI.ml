@@ -464,6 +464,7 @@ struct
         let correct_system = 
           (* Check to see if our added slack variable is a non-basic variable *)
           if List.mem (dimy-1) basic' then
+            let _ = print_string "If statement reached!\n\n\n"
             let (len,col) = get_column m' (dimy-1) in
             let row_index = find_one_index col len in
             let entering = find_entering m' row_index non' in
