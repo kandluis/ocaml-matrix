@@ -444,7 +444,7 @@ struct
       print debug_mat;
 
       (* We solve the system, returning the value and the new system *)
-      let elt, s' = simple_solve pivoted_new_sys in
+      let elt_answer, s' = simple_solve pivoted_new_sys in
       print_system s';
 
       (* debug *)
@@ -457,7 +457,7 @@ struct
 
       (* If the solution to our pivoted system is not zero, then our original 
        * system is unfeasable, so return None *)
-      match Elts.compare Elts.zero elt with
+      match Elts.compare Elts.zero elt_answer with
       | Greater | Less -> None
       | Equal -> 
         (
@@ -466,7 +466,6 @@ struct
           if List.mem (dimy-1) non' then
             let (len,col) = get_column m' (dimy-1) in
             let row_index = find_one_index col len in
-            assert (1=2);
             let entering = find_entering m' row_index basic' in
             pivot s' entering (dimy-1)
           else 
