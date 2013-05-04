@@ -454,7 +454,7 @@ struct
 
       (* Breaking our returned system because we need access to non and basic *)
       let (m',(non',basic')) = break_system s' in
-
+      
       (* If the solution to our pivoted system is not zero, then our original 
        * system is unfeasable, so return None *)
       match Elts.compare Elts.zero elt with
@@ -462,12 +462,11 @@ struct
       | Equal -> 
         (
         let correct_system = 
-          (* Check to see if our added slack variable is a non-basic variable *)
-          if List.mem (dimy-1) non' then
+          (* Check to see if our added slack variable is a basic variable *)
+          if List.mem (dimy-1) basic' then
             let (len,col) = get_column m' (dimy-1) in
             let row_index = find_one_index col len in
-            assert (1=2);
-            let entering = find_entering m' row_index basic' in
+            let entering = find_entering m' row_index non' in
             pivot s' entering (dimy-1)
           else 
             s' in
