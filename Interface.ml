@@ -7,14 +7,17 @@ open SimplexI
 let test times = 
   let _ = EltMatrix.run_tests times in
   let _ = Elts.run_tests times in
-  let _ = Simplex.run_tests in
-  print_string "If no errors above, then all tests passed!\n"
+  let _ = Simplex.run_tests times in
+  print_string "\nIf no errors above, then all tests passed!\n"
 
 (* Prints a solution *)
-let print_solution (s) : unit =
+let print_solution (e,p) : unit =
   let _ = print_string "Solved!\n\nOptimal value: " in
-  let _ = Elts.print s in
-  print_string "\n"
+  let _ = Elts.print e in
+  let _ = print_string "\n\nAchieved at the point: " in
+  let _ = Simplex.print_point p in
+  print_string "\n\n"
+
 
 
 (* Parse command-line arguments. Parses filename *)
@@ -36,9 +39,9 @@ let parse_args () : unit =
     (try 
       let filename =  Sys.argv.(2) in
       (match Simplex.load_file filename with
-        | None -> (print_string "This system has no feasable solution.\n")
+        | None -> (print_string "\nThis system has no feasable solution.\n")
         | Some sys -> 
-          let _ = print_string "Solving your system....\n" in
+          let _ = print_string "\nSolving your system....\n\n" in
           let solution = Simplex.solve sys in
           print_solution solution)
     with

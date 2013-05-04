@@ -3,6 +3,11 @@ open Matrix
 open Elts
 open EltMatrix
 
+let num_testfiles = 0
+let naming_scheme = "tests/simplex/test"
+let file_ending = ".txt"
+let results_file = "tests/simplex/results.txt"
+
 module type SIMPLEX =
 sig
 
@@ -10,6 +15,8 @@ sig
   exception ImproperInput of string
 
   (* This is a Simplex system *)
+  type point
+
   type system
 
   (* These next two were exposed for testing *)
@@ -21,24 +28,15 @@ sig
    * the system can't be solved *)
   val load_file : string -> system option
 
-  val load_data : string -> matrix
-
-  val initialize_simplex : matrix -> system option
-
-  (* val find_one_index : elt array -> int -> int *)
-
   (* Loads a system from a matrix. Returns none if the system can't be solved *)
   val load_matrix : matrix -> system option
  
   (* Finds the optimum solution to the system *)
-  val solve : system -> elt 
-
-  (* Exposed for testing. *)
-  val simple_solve : system -> elt * system
-
-  val pivot : system -> int -> int -> system
+  val solve : system -> elt * point 
   
   val run_tests : int -> unit
+
+  val print_point : point -> unit
 
   val print_system : system -> unit
 
@@ -48,6 +46,9 @@ module Simplex: SIMPLEX =
 struct
 
   exception ImproperInput of string
+
+  (* This is so we can construct an arbitrarily long touple to return the solution set *)
+  type point = Empty | Point of elt * point
 
   (* A system contains a matrix in the canonical tableau form (see simplex
   wikipedia article), plus two int lists which contain the indices of the basic
@@ -79,6 +80,22 @@ struct
     print_string "\nNon-Basic Variables: ";
     print_l n;
     ()
+
+  (* Converts a point to string format *)
+  let point_to_string (p: point) : string =
+    let rec stringing (p1: point) (buffer: string) : string =
+      match p1 with
+      | Empty -> buffer ^ ")"
+      | Point (e,Empty) -> 
+          stringing Empty (buffer ^ (Elts.to_string e))
+      | Point (e,p2) -> 
+          stringing p2 (buffer ^ (Elts.to_string e) ^ ", ")
+    in
+    stringing p "(" 
+
+  (* Prints a Simplex point *)
+  let print_point (p: point) : unit =
+    print_string (point_to_string p)
     
   (* Helper function. Takes in an array and its length and returns the
    * Matrix (ie non-zero) index of the Elts.one location. Assumes the array
@@ -89,12 +106,13 @@ struct
       if i < n then
         match Elts.compare arr.(i) Elts.one with
         | Equal -> i+1
-        | Greater | Less -> find (i+1)
+        | Greater -> raise (Failure "Looking into a column that isn't all ones!") 
+        | Less -> find (i+1)
       else
         raise (Failure "Could not find the constraint!") 
     in (* end of find function *)
     (* SHOULDNT THIS BE FIND 1 INSTEAD OF FIND 0?!?!/1?!*)
-    find 1 
+    find 0
  
   (* Pivots a system based on the entering and leaving variables *)
   let pivot (s: system) (e: int) (l: int) : system = 
@@ -438,9 +456,44 @@ struct
       ) (* End of Less match case *)
   (* End initialize_simplex *)
  
+  (* Finds the corresponding values of num_vars for the specified matrix *)
+  (* Assumes the passed in list is in increasing order for efficiency's sake*)
+  let find_vals (mat: matrix) (basic: int list) (num_vars: int) : point =
+    (* traverses a list until it reaches the value we're looking for. If so
+     * returns it in point format *)
+    let max_column = num_vars + 1 in
+    let rows,cols = get_dimensions mat in
+    let rec get_val (lst: int list) (column: int) : point * int list =
+      match lst with
+      | [] -> Point(Elts.zero,Empty), []
+      | hd::tl -> 
+        if hd = column then
+          let(len,col) = get_column mat hd in
+          let row_index = find_one_index col len in
+          let result = get_elt mat (row_index,cols) in
+          Point (result,Empty), tl
+        else if hd > column then 
+          (* Since our list is ordered, this means the variable we're looking for is
+           * not in the basics. Therefore its value is zero *)
+          Point (Elts.zero,Empty), lst
+        else (* hd < val so keep looking *)
+          get_val tl column 
+      in
+    let rec get_vals (l: int list) (column: int) : point =
+      if column <= max_column then 
+        match get_val l column with
+        | Point (coord,Empty), tl -> Point (coord,get_vals tl (column + 1))
+        | _ -> raise (Failure "get_val returned incorrectly!")
+      else (* We have enough values *) Empty
+      in
+    get_vals basic 2
+
   (* Actually solves a system *)
-  let solve (s: system) : elt =
-    let (elt,_) = simple_solve s in elt
+  let solve (s: system) : elt * point =
+    let (elt,s') = simple_solve s in
+    let mat,(non,basic) = break_system s' in
+    let solution_set = find_vals mat (List.sort compare basic) (List.length non) in
+    (elt, solution_set)
 
   
   (************ Functions for I/O *************)
@@ -571,6 +624,52 @@ struct
   let load_matrix_file (s: string) : system option =
     load_matrix (load s)
 
-  let run_tests times = ()
+  (******************* TESTING ************************)
+  let test_files = 
+    let rec make_file_list (num: int) (curr: string list) =
+      if num < num_testfiles then
+        let name = naming_scheme ^ (string_of_int num)^ file_ending in
+        make_file_list (num + 1) (name::curr)
+      else curr
+    in
+    make_file_list num_testfiles [] 
+
+  let results = 
+    let rec load_results (chan: in_channel) (built: string list) : string list =
+      try
+        let line = String.trim (input_line chan) in
+        load_results chan (line::built) 
+      with
+      | End_of_file -> built
+    in
+    let inchan = open_in results_file in
+    load_results inchan []
+
+  let comparison (curr: bool) (s1: string) (s2: string) : bool =
+    (curr && s1 = s2) || (Elts.trim (Elts.from_string s1)) = 
+      (Elts.trim (Elts.from_string s2))
+
+  let rec test_simplex (times: int) : unit =
+    let rec testing (lst: string list) : string list =
+      match lst with
+      | [] -> []
+      | filename::tl -> 
+        match load_file filename with
+        | None -> "None"::testing tl
+        | Some sys -> 
+          let _ = print_string "\nSolving your system....\n\n" in
+          let (e,p) = solve sys in
+          ((Elts.to_string e) ^ "," ^ point_to_string p)::testing tl
+    in
+    if (times > 0) then
+      let test_results = testing test_files in
+      let _ = assert(List.fold_left2 comparison true test_results results) in
+      test_simplex (times - 1)
+    else 
+      ()
+
+  let run_tests times = 
+    test_simplex times;
+    ()
  
 end

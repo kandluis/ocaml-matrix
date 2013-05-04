@@ -395,10 +395,11 @@ struct
     let buffer = ref "" in
     let to_string (_: int) (j: int) (e: elt) =
       buffer := !buffer ^ C.to_string e;
-      buffer := !buffer ^ ",";
       if j = col then
         buffer := !buffer ^ "\n"
-      else () in
+      else 
+        buffer := !buffer ^ "," 
+      in
     iteri to_string ((row,col),m);
     !buffer
 

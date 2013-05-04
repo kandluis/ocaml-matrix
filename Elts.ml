@@ -45,6 +45,8 @@ struct
 
   let print a = print_string (to_string a)
 
+  let trim = int_of_float
+
   let generate () = 3. 
 
   let generate_gt a () = a +. 1.
