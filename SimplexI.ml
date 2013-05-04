@@ -93,7 +93,7 @@ struct
    * contains only one Elts.one *)
   let find_one_index (arr: elt array) (n: int) =
     (* debug *)
-    (* print_array arr; *)
+    print_array arr;
 
     let rec find (i: int) =
       if i < n then
@@ -136,7 +136,6 @@ struct
     
     (********* "Instance Variables" *************)
     (* debug *)
-    (*
     print_string "Starting simple_solve \n";
     let (debug_s', (debug_non, debug_basic)) = break_system s in 
     print debug_s';
@@ -146,7 +145,6 @@ struct
     print_string "basic: \n";
     List.iter print_int debug_basic;
     print_string "\n";
-    *)
 
     let (mat,(non,basic)) = break_system s in
     
@@ -216,12 +214,10 @@ struct
     in (* end find_e *)
     
     (* debug *)
-    (*
     print_string "debuggin find_e, nonbasic variables are:  \n";
     List.iter print_int non;
     if find_e (List.sort compare non) = None then print_string "Returns None\n" 
     else print_string "Doesn't return None\n";
-    *)
 
     (* Helper function which finds the leaving variable in a given row *)
     let rec find_leaving (lst: int list) (row_index: int) : int option =
@@ -242,12 +238,9 @@ struct
           let solution = get_elt mat (1,p) in
 
           (* debug *)
-          (*
           print_string "THIS IS DONE!!!!!!!\n";
           Elts.print solution;
           print_string "\n";
-          *)
-
           (solution,s)
         end 
       else raise (Failure "unbounded: no solution"))
@@ -270,17 +263,14 @@ struct
         | Some x -> x in
       
       (* debug print out entering leaving variable *)
-      (*
       print_string "entering, leaving:";
       print_int e;
       print_int l;
       print_string "\n";
-      *)
 
       let s' = pivot s e l in 
       
       (* debug *)
-      (*
       let (debug_s', (debug_non, debug_basic)) = break_system s' in 
       print debug_s';
       print_string "nonbasic: \n";
@@ -289,7 +279,7 @@ struct
       print_string "basic: \n";
       List.iter print_int debug_basic;
       print_string "\n";
-      *)
+      
       
       simple_solve s'  
       )
@@ -369,7 +359,7 @@ struct
     let min_index = get_min_b 1 1 in 
 
     (* debug *)
-    (* print_int min_index; *)
+    print_int min_index;
 
     (* if the least b is greater than or equal to 0 no modification is 
      * needed. If it is less than 0, need to add an additional
@@ -379,7 +369,7 @@ struct
     | Greater | Equal -> 
       ( 
       (* debug *)
-      (* print_string "It's greater orequal !!!"; *)
+      print_string "It's greater orequal !!!";
 
       let dimx,dimy = m, (m+n-1) in
       let new_mat = empty dimx dimy in 
@@ -400,7 +390,7 @@ struct
       set_column new_mat dimy col; 
       
       (* debug *)
-      (* print new_mat; *)
+      print new_mat;
 
       (* returns system *)
       Some (new_mat, ((generate_list 1 (n-1)), (generate_list (n) (n+m-2))))
@@ -412,7 +402,7 @@ struct
        * The objective function is now minimizing x_{m+n-1}, the slack variable
        *)
       (* debug *)
-      (* print_string "Less!!!"; *)
+      print_string "Less!!!";
 
       let dimx, dimy = m, m+n in
       let new_mat = empty dimx dimy in 
@@ -450,17 +440,17 @@ struct
       let pivoted_new_sys = pivot new_sys (dimy-1) (min_index+n-1) in
 
       (* debug to print out debug_mat *)
-      (*
       let (debug_mat, _) = break_system pivoted_new_sys in 
       print debug_mat;
-      *)
 
       (* We solve the system, returning the value and the new system *)
       let elt_answer, s' = simple_solve pivoted_new_sys in
       print_system s';
 
       (* debug *)
-      (* print_string "The answer should be this: "; *)
+      print_string "The answer should be this: ";
+
+      
 
       (* Breaking our returned system because we need access to non and basic *)
       let (m',(non',basic')) = break_system s' in
