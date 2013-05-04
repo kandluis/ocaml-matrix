@@ -138,11 +138,13 @@ struct
     let (debug_s', (debug_non, debug_basic)) = break_system s in 
     print debug_s';
     print_string "nonbasic: \n";
-    List.iter (print_int) debug_non;
+    List.iter (fun x -> print_int x; print_string " ") debug_non;
     print_string "\n";
     print_string "basic: \n";
-    List.iter print_int debug_basic;
-    print_string "\n"; *)
+    print_string "\n"; 
+    List.iter (fun x -> print_int x; print_string " ") debug_basic;
+    print_string "\n";
+    *)
 
     let (mat,(non,basic)) = break_system s in
     
@@ -210,7 +212,16 @@ struct
           else find_e tl 
         | Less | Equal -> find_e tl 
     in (* end find_e *)
-    
+
+    (*    
+    (* debug *)
+    print_string "debugging find_e, nonbasic variables are:  \n";
+    List.iter (fun x -> print_int x; print_string " ";) non;
+    print_string "\n";
+    if find_e (List.sort compare non) = None then print_string "Returns None\n" 
+    else print_string "Doesn't return None\n";
+    *)
+
     (* Helper function which finds the leaving variable in a given row *)
     let rec find_leaving (lst: int list) (row_index: int) : int option =
       match lst with
@@ -250,9 +261,11 @@ struct
         | Some x -> x in
       
       (* debug print out entering leaving variable *)
+
       (*
-      print_string "entering, leaving:";
+      print_string "entering, leaving: ";
       print_int e;
+      print_string ",";
       print_int l;
       print_string "\n";
       *)
@@ -263,11 +276,12 @@ struct
       let (debug_s', (debug_non, debug_basic)) = break_system s' in 
       print debug_s';
       print_string "nonbasic: \n";
-      List.iter (print_int) debug_non;
+      List.iter (fun x -> print_int x; print_string " ";) debug_non;
       print_string "\n";
       print_string "basic: \n";
-      List.iter print_int debug_basic;
-      print_string "\n"; *)
+      List.iter (fun x -> print_int x; print_string " ";) debug_basic;
+      print_string "\n";
+      *)
       
       
       simple_solve s'  
@@ -348,6 +362,13 @@ struct
 
     let min_index = get_min_b 1 1 in 
 
+    (*
+    (* debug *)
+    print_string "min_index: ";
+    print_int min_index;
+    print_string "\n";
+    *)
+
     (* if the least b is greater than or equal to 0 no modification is 
      * needed. If it is less than 0, need to add an additional
      * slack variable and pivot so that the solution is 
@@ -355,7 +376,6 @@ struct
     match Elts.compare b_col.(min_index) Elts.zero with 
     | Greater | Equal -> 
       ( 
-
       let dimx,dimy = m, (m+n-1) in
       let new_mat = empty dimx dimy in 
       (* copies the coefficients of the constraint functions and objective 
@@ -383,7 +403,6 @@ struct
       (* Creates new m by m+n matrix with an additional slack variable. 
        * The objective function is now minimizing x_{m+n-1}, the slack variable
        *)
-
       let dimx, dimy = m, m+n in
       let new_mat = empty dimx dimy in 
       
@@ -494,25 +513,6 @@ struct
           ) (* End of Equal match case *)
       ) (* End of Less match case *)
   (* End initialize_simplex *)
-(*
-              raise (Failure "The column did not have a one!?") in
-          helper (start - 1) in
-        let rec substitute (lst: int list) : unit =
-          match lst with
-          | [] -> ()
-          | hd::tl ->
-            let (_,col) = get_column final_matrix hd in
-            let skip_row_index = skip_find_one_index col 2 in
-            sub_mult final_matrix 1 skip_row_index 
-                      (get_elt final_matrix (1, hd));
-            substitute tl in
-        let _ = substitute basic_fin in
-          Some (final_matrix,(non_fin,basic_fin))
-        (* End of Less match case *)
-
- (* End initialize_simplex *)
->>>>>>> 201c1caa9cbebebfc2eb1e7518103ba58a775999
-*)
  
   (* Actually solves a system *)
   let solve (s: system) : elt =
