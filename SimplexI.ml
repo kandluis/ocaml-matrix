@@ -77,6 +77,16 @@ struct
     done;
     ()
 
+  (* Prints a system *)
+  let print_system (s: system) : unit =
+    let m,(n,b) = break_system s in
+    print m;
+    print_string "\nBasic Variables: ";
+    let print_l = List.iter (fun x -> print_string ((string_of_int x) ^ " ")) in
+    print_l b;
+    print_string "\nNon-Basic Variables: ";
+    print_l n;
+    ()
     
   (* Helper function. Takes in an array and its length and returns the
    * Matrix (ie non-zero) index of the Elts.one location. Assumes the array
@@ -126,6 +136,7 @@ struct
     
     (********* "Instance Variables" *************)
     (* debug *)
+    print_string "Starting simple_solve \n";
     let (debug_s', (debug_non, debug_basic)) = break_system s in 
     print debug_s';
     print_string "nonbasic: \n";
@@ -227,7 +238,8 @@ struct
 
         (* debug *)
         print_string "THIS IS DONE!!!!!!!\n";
-
+        Elts.print solution;
+        print_string "\n";
         (solution,s))
       else raise (Failure "unbounded: no solution"))
     | Some e -> 
@@ -431,11 +443,12 @@ struct
 
       (* We solve the system, returning the value and the new system *)
       let elt, s' = simple_solve pivoted_new_sys in
+      print_system s';
 
       (* Breaking our returned system because we need access to non and basic *)
       let (m',(non',basic')) = break_system s' in
 
-            (* If the solution to our pivoted system is not zero, then our original 
+      (* If the solution to our pivoted system is not zero, then our original 
        * system is unfeasable, so return None *)
       match Elts.compare Elts.zero elt with
       | Greater | Less -> None
@@ -446,6 +459,7 @@ struct
           if List.mem (dimy-1) non' then
             let (len,col) = get_column m' (dimy-1) in
             let row_index = find_one_index col len in
+            assert (1=2);
             let entering = find_entering m' row_index basic' in
             pivot s' entering (dimy-1)
           else 
@@ -613,15 +627,6 @@ struct
   let load_matrix (m: matrix) : system option =
     initialize_simplex m 
 
-  let print_system (s: system) : unit =
-    let m,(n,b) = break_system s in
-    print m;
-    print_string "\nBasic Variables: ";
-    let print_l = List.iter (fun x -> print_string ((string_of_int x) ^ " ")) in
-    print_l b;
-    print_string "\nNon-Basic Variables: ";
-    print_l n;
-    ()
 
   let run_tests times = ()
  
