@@ -223,13 +223,15 @@ struct
     match find_e (List.sort compare non) with 
     | None -> 
       (if not(check_row 1) then 
-        (let solution = get_elt mat (1,p) in
+        begin
+          let solution = get_elt mat (1,p) in
 
-        (* debug *)
-        print_string "THIS IS DONE!!!!!!!\n";
-
-        (solution,s))
-      else raise (Failure "unbounded: no solution"))
+          (* debug *)
+          print_string "THIS IS DONE!!!!!!!\n";
+  
+          (solution,s)
+        end
+      else (raise (Failure "unbounded: no solution")))
     | Some e -> 
       (
       (* gets our entering column *)
@@ -432,10 +434,15 @@ struct
       (* We solve the system, returning the value and the new system *)
       let elt, s' = simple_solve pivoted_new_sys in
 
+      (* debug *)
+      print_string "The answer should be this: ";
+
+      
+
       (* Breaking our returned system because we need access to non and basic *)
       let (m',(non',basic')) = break_system s' in
 
-            (* If the solution to our pivoted system is not zero, then our original 
+      (* If the solution to our pivoted system is not zero, then our original 
        * system is unfeasable, so return None *)
       match Elts.compare Elts.zero elt with
       | Greater | Less -> None
@@ -526,7 +533,8 @@ struct
   
   (* Loads one constraint from the exploded string list of elements
    * Returns a string * elt list. Returns the constraint and the elt list *)  
-  let rec load_constraint_helper (lst: string list) : (string option * elt list) =
+  let rec load_constraint_helper (lst: string list) : 
+                                 (string option * elt list) =
     match lst with
     | [] -> (None,[])
     | hd::tl ->
