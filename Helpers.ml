@@ -11,7 +11,6 @@ let explode (s: string) (space: string) : string list =
       else 
         let s' = String.sub curr 0 (len - 1) in
         if c = space then build s' "" (buffer::lst)
-        else if c = "\n" || c = "\r" || c = "\r\n" || c = "\n\r" 
-          then build s' buffer lst
         else build s' (c ^ buffer) lst in
-  build s "" []
+  build (String.trim s) "" []
+

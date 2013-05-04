@@ -7,7 +7,7 @@ open SimplexI
 let test times = 
   let _ = EltMatrix.run_tests times in
   let _ = Elts.run_tests times in
-  let _ = Simplex.run_tests in
+  let _ = Simplex.run_tests times in
   print_string "\nIf no errors above, then all tests passed!\n"
 
 (* Prints a solution *)

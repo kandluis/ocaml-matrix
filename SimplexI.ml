@@ -3,6 +3,11 @@ open Matrix
 open Elts
 open EltMatrix
 
+let num_testfiles = 0
+let naming_scheme = "tests/simplex/test"
+let file_ending = ".txt"
+let results_file = "tests/simplex/results.txt"
+
 module type SIMPLEX =
 sig
 
@@ -76,18 +81,21 @@ struct
     print_l n;
     ()
 
+  (* Converts a point to string format *)
+  let point_to_string (p: point) : string =
+    let rec stringing (p1: point) (buffer: string) : string =
+      match p1 with
+      | Empty -> buffer ^ ")"
+      | Point (e,Empty) -> 
+          stringing Empty (buffer ^ (Elts.to_string e))
+      | Point (e,p2) -> 
+          stringing p2 (buffer ^ (Elts.to_string e) ^ ", ")
+    in
+    stringing p "(" 
+
   (* Prints a Simplex point *)
   let print_point (p: point) : unit =
-    let rec printing (p1: point) : unit =
-      match p1 with
-      | Empty -> print_string ")"
-      | Point (e,p2) -> 
-        let _ = Elts.print e in
-        let _ = print_string "," in
-        printing p2 
-      in
-    let _ = print_string "(" in
-    printing p 
+    print_string (point_to_string p)
     
   (* Helper function. Takes in an array and its length and returns the
    * Matrix (ie non-zero) index of the Elts.one location. Assumes the array
@@ -616,6 +624,52 @@ struct
   let load_matrix_file (s: string) : system option =
     load_matrix (load s)
 
-  let run_tests times = ()
+  (******************* TESTING ************************)
+  let test_files = 
+    let rec make_file_list (num: int) (curr: string list) =
+      if num < num_testfiles then
+        let name = naming_scheme ^ (string_of_int num)^ file_ending in
+        make_file_list (num + 1) (name::curr)
+      else curr
+    in
+    make_file_list num_testfiles [] 
+
+  let results = 
+    let rec load_results (chan: in_channel) (built: string list) : string list =
+      try
+        let line = String.trim (input_line chan) in
+        load_results chan (line::built) 
+      with
+      | End_of_file -> built
+    in
+    let inchan = open_in results_file in
+    load_results inchan []
+
+  let comparison (curr: bool) (s1: string) (s2: string) : bool =
+    (curr && s1 = s2) || (Elts.trim (Elts.from_string s1)) = 
+      (Elts.trim (Elts.from_string s2))
+
+  let rec test_simplex (times: int) : unit =
+    let rec testing (lst: string list) : string list =
+      match lst with
+      | [] -> []
+      | filename::tl -> 
+        match load_file filename with
+        | None -> "None"::testing tl
+        | Some sys -> 
+          let _ = print_string "\nSolving your system....\n\n" in
+          let (e,p) = solve sys in
+          ((Elts.to_string e) ^ "," ^ point_to_string p)::testing tl
+    in
+    if (times > 0) then
+      let test_results = testing test_files in
+      let _ = assert(List.fold_left2 comparison true test_results results) in
+      test_simplex (times - 1)
+    else 
+      ()
+
+  let run_tests times = 
+    test_simplex times;
+    ()
  
 end

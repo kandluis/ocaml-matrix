@@ -34,6 +34,9 @@ sig
   (* Prints a t *)
   val print: t -> unit
 
+  (* For testing *)
+  val trim: t -> int
+
   (* Generates the same t each time when called *)
   val generate: unit -> t
 
