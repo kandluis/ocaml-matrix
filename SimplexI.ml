@@ -230,7 +230,9 @@ struct
           print_string "THIS IS DONE!!!!!!!\n";
           Elts.print solution;
           print_string "\n";
-          (solution,s)
+          let m,(n,b) = break_system s in
+          let corr_sol = Elts.multiply (get_elt m (1,1)) solution in
+          (corr_sol,s) 
         end 
       else raise (Failure "unbounded: no solution"))
     | Some e -> 
@@ -465,25 +467,6 @@ struct
           ) (* End of Equal match case *)
       ) (* End of Less match case *)
   (* End initialize_simplex *)
-(*
-              raise (Failure "The column did not have a one!?") in
-          helper (start - 1) in
-        let rec substitute (lst: int list) : unit =
-          match lst with
-          | [] -> ()
-          | hd::tl ->
-            let (_,col) = get_column final_matrix hd in
-            let skip_row_index = skip_find_one_index col 2 in
-            sub_mult final_matrix 1 skip_row_index 
-                      (get_elt final_matrix (1, hd));
-            substitute tl in
-        let _ = substitute basic_fin in
-          Some (final_matrix,(non_fin,basic_fin))
-        (* End of Less match case *)
-
- (* End initialize_simplex *)
->>>>>>> 201c1caa9cbebebfc2eb1e7518103ba58a775999
-*)
  
   (* Actually solves a system *)
   let solve (s: system) : elt =
