@@ -10,6 +10,13 @@ let test times =
   let _ = Simplex.run_tests in
   print_string "If no errors above, then all tests passed!\n"
 
+(* Prints a solution *)
+let print_solution (s) : unit =
+  let _ = print_string "Solved!\n\nOptimal value:" in
+  let _ = Elts.print s in
+  print_string "\n"
+
+
 (* Parse command-line arguments. Parses filename *)
 let parse_args () : unit =
   let usage s = 
@@ -25,16 +32,17 @@ let parse_args () : unit =
       test times
     with
       | Failure s -> usage s)
-  | "solve"-> ()(*
+  | "solve"-> 
     (try 
       let filename =  Sys.argv.(2) in
-      let inchan = open_in filename in
-      let m = Simplex.load inchan in
-      (match Simplex.solve m with
-        | None -> (print_string "No solution exists for:\n"; EltMatrix.print m)
-        | Some sol -> (print_string "Solution: "; Elts.print sol)) 
+      (match Simplex.load_file filename with
+        | None -> (print_string "There is no feasable solution.\n")
+        | Some sys -> 
+          let _ = print_string "Solving your system....\n" in
+          let solution = Simplex.solve sys in
+          print_solution solution)
     with
-      | Sys_error e -> usage e) *)
+      | Sys_error e -> usage e) 
   | _ -> usage "Incorrect inputs."
 ;;
 
