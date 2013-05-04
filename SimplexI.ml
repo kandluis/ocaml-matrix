@@ -69,11 +69,23 @@ struct
     match a <= b with 
     | true -> a::(generate_list (a+1) b) 
     | false -> [] 
- 
+  
+  (* helper function to print array for DEBUG *)
+  let print_array (arr: elt array) : unit = 
+    for i = 0 to (Array.length arr) -1 do
+      Elts.print arr.(i); 
+      print_string "\n";
+    done;
+    ()
+
+    
   (* Helper function. Takes in an array and its length and returns the
    * Matrix (ie non-zero) index of the Elts.one location. Assumes the array
    * contains only one Elts.one *)
   let find_one_index (arr: elt array) (n: int) =
+    (* debug *)
+    print_array arr;
+
     let rec find (i: int) =
       if i < n then
     match Elts.compare arr.(i) Elts.one with
@@ -81,6 +93,8 @@ struct
     | Greater | Less -> find (i+1)
       else
     raise (Failure "Could not find the constraint!") in
+
+  (* SHOULDNT THIS BE FIND 1 INSTEAD OF FIND 0?!?!/1?!*)
     find 0 
  
   (* Pivots a system based on the entering and leaving variables *)
@@ -109,6 +123,17 @@ struct
 
   (* This solves the simple Simplex case. Returns the solution and a system *)
   let rec simple_solve (s: system) : (elt * system) =
+    
+    (* debug *)
+    let (debug_s', (debug_non, debug_basic)) = break_system s in 
+    print debug_s';
+    print_string "nonbasic: \n";
+    List.iter (print_int) debug_non;
+    print_string "\n";
+    print_string "basic: \n";
+    List.iter print_int debug_basic;
+    print_string "\n";
+
     
     let (mat,(non,basic)) = break_system s in
     
@@ -175,14 +200,25 @@ struct
             else find_e tl 
           | Less | Equal -> find_e tl 
     in (* end find_e *)
+    
+    (* debug *)
+    print_string "debuggin find_e, nonbasic variables are:  \n";
+    List.iter print_int non;
+    if find_e (List.sort compare non) = None then print_string "Returns None\n" 
+    else print_string "Doesn't return None\n";
 
     match find_e (List.sort compare non) with 
     | None -> 
-      if not(check_row 1) then 
-        let solution = get_elt mat (1,p) in
-        (solution,s)
-      else raise (Failure "unbounded: no solution")
+      (if not(check_row 1) then 
+        (let solution = get_elt mat (1,p) in
+
+        (* debug *)
+        print_string "THIS IS DONE!!!!!!!\n";
+
+        (solution,s))
+      else raise (Failure "unbounded: no solution"))
     | Some e -> 
+      (
       (* gets our entering column *)
       let (len1,column) = get_column mat e in
       
@@ -205,11 +241,30 @@ struct
           | Less | Greater -> find_leaving tl in
       let l =
         match find_leaving basic with
-        | None -> raise (Failure "Could not find entering variable")
+        | None -> raise (Failure "Could not find leaving variable")
         | Some x -> x in
+      
+      (* debug print out entering leaving variable *)
+      print_string "entering, leaving:";
+      print_int e;
+      print_int l;
+      print_string "\n";
 
       let s' = pivot s e l in 
+      
+      (* debug *)
+      let (debug_s', (debug_non, debug_basic)) = break_system s' in 
+      print debug_s';
+      print_string "nonbasic: \n";
+      List.iter (print_int) debug_non;
+      print_string "\n";
+      print_string "basic: \n";
+      List.iter print_int debug_basic;
+      print_string "\n";
+      
+      
       simple_solve s'  
+      )
       (* end of Some case *)
 
   (* end of simple_solve *)
@@ -388,8 +443,9 @@ struct
           | [] -> ()
           | hd::tl ->
             let (_,col) = get_column final_matrix hd in
-            let row_index = skip_find_one_index col 2 in
-            sub_mult final_matrix 1 row_index (get_elt final_matrix (1, hd));
+            let skip_row_index = skip_find_one_index col 2 in
+            sub_mult final_matrix 1 skip_row_index 
+                      (get_elt final_matrix (1, hd));
             substitute tl in
         let _ = substitute basic_fin in
           Some (final_matrix,(non_fin,basic_fin))
