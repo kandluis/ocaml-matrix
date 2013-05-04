@@ -137,14 +137,7 @@ struct
     (********* "Instance Variables" *************)
     (* debug *)
     print_string "Starting simple_solve \n";
-    let (debug_s', (debug_non, debug_basic)) = break_system s in 
-    print debug_s';
-    print_string "nonbasic: \n";
-    List.iter (print_int) debug_non;
-    print_string "\n";
-    print_string "basic: \n";
-    List.iter print_int debug_basic;
-    print_string "\n";
+    print_system s;
 
     let (mat,(non,basic)) = break_system s in
     
@@ -166,6 +159,7 @@ struct
      * contains at least one positive value *)
     let check_col (x:int): bool = 
       let (height_col, col) = get_column mat x in
+      (* Ignores first row *)
       has_pos 1 height_col col 
     in (* end check_col *)
 
@@ -173,7 +167,8 @@ struct
     at least one positive value *)
     let check_row (x:int): bool = 
       let (height_row, row) = get_row mat x in
-      has_pos 0 (height_row - 1) row 
+      (* Ignoring the first column in the matrix *)
+      has_pos 1 (height_row - 1) row 
     in (* end check_row *)
 
     (* Helper function to find the tightest constraint *)
@@ -212,12 +207,6 @@ struct
           else find_e tl 
         | Less | Equal -> find_e tl 
     in (* end find_e *)
-    
-    (* debug *)
-    print_string "debuggin find_e, nonbasic variables are:  \n";
-    List.iter print_int non;
-    if find_e (List.sort compare non) = None then print_string "Returns None\n" 
-    else print_string "Doesn't return None\n";
 
     (* Helper function which finds the leaving variable in a given row *)
     let rec find_leaving (lst: int list) (row_index: int) : int option =
@@ -262,24 +251,7 @@ struct
         | None -> raise (Failure "Could not find entering variable")
         | Some x -> x in
       
-      (* debug print out entering leaving variable *)
-      print_string "entering, leaving:";
-      print_int e;
-      print_int l;
-      print_string "\n";
-
       let s' = pivot s e l in 
-      
-      (* debug *)
-      let (debug_s', (debug_non, debug_basic)) = break_system s' in 
-      print debug_s';
-      print_string "nonbasic: \n";
-      List.iter (print_int) debug_non;
-      print_string "\n";
-      print_string "basic: \n";
-      List.iter print_int debug_basic;
-      print_string "\n";
-      
       
       simple_solve s'  
       )
@@ -299,6 +271,7 @@ struct
 
     (************ Helper functions **************)
     (* finds the least constant b and returns its index *)
+    (* This function is zero-indexed *)
     let rec get_min_b (min_index:int) (i:int): int = 
       if i < m then 
         (* Arrays are 0-indexed *)
@@ -320,7 +293,8 @@ struct
         | Greater | Less -> hd 
     in (* end find_entering *)
 
-    (* Helper function needs commenting *)
+    (* Helper function to needed to remove x0 from our list of basics once we
+     * convert back to the new system *)
     let rec filter_and_decrease (lst: int list) (max_dim: int) : int list =
       match lst with
       | [] -> []
@@ -368,9 +342,6 @@ struct
     match Elts.compare b_col.(min_index) Elts.zero with 
     | Greater | Equal -> 
       ( 
-      (* debug *)
-      print_string "It's greater orequal !!!";
-
       let dimx,dimy = m, (m+n-1) in
       let new_mat = empty dimx dimy in 
       (* copies the coefficients of the constraint functions and objective 
@@ -393,7 +364,7 @@ struct
       print new_mat;
 
       (* returns system *)
-      Some (new_mat, ((generate_list 1 (n-1)), (generate_list (n) (n+m-2))))
+      Some (new_mat, ((generate_list 2 (n-1)), (generate_list (n) (n+m-2))))
       ) (* end of Greater | Equal case *)
 
     | Less -> 
@@ -402,14 +373,13 @@ struct
        * The objective function is now minimizing x_{m+n-1}, the slack variable
        *)
       (* debug *)
-      print_string "Less!!!";
 
       let dimx, dimy = m, m+n in
       let new_mat = empty dimx dimy in 
       
       (* copies the coefficients of the constraint functions and objective 
        * function into the new matrix *)      
-      for c = 1 to n -1 do 
+      for c = 1 to n - 1 do 
         let (_, col) = get_column mat c in
         set_column new_mat c col 
       done;
@@ -433,7 +403,7 @@ struct
       
       (* Making our new system! This is the original EXCEPT for the objective *)
       let new_sys = (new_mat, 
-                     ((dimy-1)::(generate_list 1 (n-1)), (generate_list (n) 
+                     ((dimy-1)::(generate_list 2 (n-1)), (generate_list (n) 
                                                          (dimy-2)))) in
       
       (* We pivot once to return a solvable system *)
@@ -446,11 +416,6 @@ struct
       (* We solve the system, returning the value and the new system *)
       let elt_answer, s' = simple_solve pivoted_new_sys in
       print_system s';
-
-      (* debug *)
-      print_string "The answer should be this: ";
-
-      
 
       (* Breaking our returned system because we need access to non and basic *)
       let (m',(non',basic')) = break_system s' in
@@ -474,7 +439,7 @@ struct
 
           let (mat',(non_fin,basic_fin)) = break_system correct_system in
           let final_matrix = empty m (dimy-1) in
-          for c = 1 to n+m-1 do
+          for c = 1 to dimy-1 do
             if c < dimy-1 then
               let (_,col) = get_column mat' c in
               set_column final_matrix c col
@@ -483,6 +448,7 @@ struct
               set_column final_matrix c col
           done;
           let (_,old_obj) = get_row mat 1 in
+          (* New obj doesn't have the x_{0} variable *)
           let slacked_obj = Array.make (dimy-1) Elts.zero in
           for c = 1 to n-1 do
               slacked_obj.(c-1) <- old_obj.(c-1)
@@ -491,7 +457,7 @@ struct
           set_row final_matrix 1 slacked_obj;
 
           (* Since we removed a slack, we need to decrease our basic list *)
-          let basic_fin = filter_and_decrease basic_fin dimy in 
+          let non_fin = filter_and_decrease non_fin dimy in 
 
 
           let _ = substitute final_matrix basic_fin in
@@ -573,6 +539,7 @@ struct
         match load_constraint_helper line_list with
         | None, _ -> raise (ImproperInput "Constraint mismatch!")
         | Some s, elt_lst ->
+          let elt_lst = Elts.zero::elt_lst in
           let neg_one = Elts.subtract Elts.zero Elts.one in
           if s = "<=" then load (elt_lst::built)
           else if s = ">=" then 
@@ -597,21 +564,30 @@ struct
     | hd::[] -> hd::[]
     | hd::tl -> (f hd)::(special_map f tl)
 
+  (* This functions applies f to the last element in a list *)
+  let rec tail_map (f: 'a -> 'a) (lst: 'a list) : 'a list =
+    match lst with
+    | [] -> []
+    | hd:: [] -> (f hd):: []
+    | hd::tl ->  hd::(tail_map f tl)
+
   (* Reads the data from an input stream and returns a list list 
    * with the right values for Simplex. ie, it flips signs if maximizing
    * objective *)
   let read_data (chan: in_channel) : (elt list list) =
     let line = String.lowercase (input_line chan) in
+    let neg_one = Elts.subtract Elts.zero Elts.one in
     match line with
     | "min" | "min\r" -> 
       (* Our algorithm minimizes by default, so this is moving all the 
        * constraints to the other side *)
-      let neg_one = Elts.subtract Elts.zero Elts.one in
-      let obj_lst = special_map (Elts.multiply neg_one) (load_objective chan) in
+      (* We load a min by adding a neg-one to the list and then flipping the signs on all of them but the last *)
+      (* The first one should be a positive one *)
+      let obj_lst = special_map (Elts.multiply neg_one) (neg_one::(load_objective chan)) in
       let cons_lsts = load_constraints chan in
       obj_lst::cons_lsts
     | "max" | "max\r" ->
-      let obj_lst = load_objective chan in
+      let obj_lst = neg_one::(tail_map (Elts.multiply neg_one) (load_objective chan)) in
       let cons_lsts = load_constraints chan in
       obj_lst::cons_lsts 
     | _ -> raise (ImproperInput "Missing \"min\" or \"max\" on line 1") 
@@ -629,7 +605,8 @@ struct
 
   (* Tries to load a solvable system from a file *)
   let load_file (file: string) : system option =
-    initialize_simplex (load_data file)
+    let m = load_data file in
+    initialize_simplex m
 
   (* Load a system given a matrix. Returns non if the system is
    * no solvable *)
