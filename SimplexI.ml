@@ -10,6 +10,8 @@ sig
   exception ImproperInput of string
 
   (* This is a Simplex system *)
+  type point
+
   type system
 
   (* These next two were exposed for testing *)
@@ -21,24 +23,15 @@ sig
    * the system can't be solved *)
   val load_file : string -> system option
 
-  val load_data : string -> matrix
-
-  val initialize_simplex : matrix -> system option
-
-  (* val find_one_index : elt array -> int -> int *)
-
   (* Loads a system from a matrix. Returns none if the system can't be solved *)
   val load_matrix : matrix -> system option
  
   (* Finds the optimum solution to the system *)
-  val solve : system -> elt 
-
-  (* Exposed for testing. *)
-  val simple_solve : system -> elt * system
-
-  val pivot : system -> int -> int -> system
+  val solve : system -> elt * point 
   
   val run_tests : int -> unit
+
+  val print_point : point -> unit
 
   val print_system : system -> unit
 
@@ -48,6 +41,9 @@ module Simplex: SIMPLEX =
 struct
 
   exception ImproperInput of string
+
+  (* This is so we can construct an arbitrarily long touple to return the solution set *)
+  type point = Empty | Point of elt * point
 
   (* A system contains a matrix in the canonical tableau form (see simplex
   wikipedia article), plus two int lists which contain the indices of the basic
@@ -79,6 +75,19 @@ struct
     print_string "\nNon-Basic Variables: ";
     print_l n;
     ()
+
+  (* Prints a Simplex point *)
+  let print_point (p: point) : unit =
+    let rec printing (p1: point) : unit =
+      match p1 with
+      | Empty -> print_string ")"
+      | Point (e,p2) -> 
+        let _ = Elts.print e in
+        let _ = print_string "," in
+        printing p2 
+      in
+    let _ = print_string "(" in
+    printing p 
     
   (* Helper function. Takes in an array and its length and returns the
    * Matrix (ie non-zero) index of the Elts.one location. Assumes the array
@@ -89,12 +98,13 @@ struct
       if i < n then
         match Elts.compare arr.(i) Elts.one with
         | Equal -> i+1
-        | Greater | Less -> find (i+1)
+        | Greater -> raise (Failure "Looking into a column that isn't all ones!") 
+        | Less -> find (i+1)
       else
         raise (Failure "Could not find the constraint!") 
     in (* end of find function *)
     (* SHOULDNT THIS BE FIND 1 INSTEAD OF FIND 0?!?!/1?!*)
-    find 1 
+    find 0
  
   (* Pivots a system based on the entering and leaving variables *)
   let pivot (s: system) (e: int) (l: int) : system = 
@@ -438,9 +448,44 @@ struct
       ) (* End of Less match case *)
   (* End initialize_simplex *)
  
+  (* Finds the corresponding values of num_vars for the specified matrix *)
+  (* Assumes the passed in list is in increasing order for efficiency's sake*)
+  let find_vals (mat: matrix) (basic: int list) (num_vars: int) : point =
+    (* traverses a list until it reaches the value we're looking for. If so
+     * returns it in point format *)
+    let max_column = num_vars + 1 in
+    let rows,cols = get_dimensions mat in
+    let rec get_val (lst: int list) (column: int) : point * int list =
+      match lst with
+      | [] -> Point(Elts.zero,Empty), []
+      | hd::tl -> 
+        if hd = column then
+          let(len,col) = get_column mat hd in
+          let row_index = find_one_index col len in
+          let result = get_elt mat (row_index,cols) in
+          Point (result,Empty), tl
+        else if hd > column then 
+          (* Since our list is ordered, this means the variable we're looking for is
+           * not in the basics. Therefore its value is zero *)
+          Point (Elts.zero,Empty), lst
+        else (* hd < val so keep looking *)
+          get_val tl column 
+      in
+    let rec get_vals (l: int list) (column: int) : point =
+      if column <= max_column then 
+        match get_val l column with
+        | Point (coord,Empty), tl -> Point (coord,get_vals tl (column + 1))
+        | _ -> raise (Failure "get_val returned incorrectly!")
+      else (* We have enough values *) Empty
+      in
+    get_vals basic 2
+
   (* Actually solves a system *)
-  let solve (s: system) : elt =
-    let (elt,_) = simple_solve s in elt
+  let solve (s: system) : elt * point =
+    let (elt,s') = simple_solve s in
+    let mat,(non,basic) = break_system s' in
+    let solution_set = find_vals mat (List.sort compare basic) (List.length non) in
+    (elt, solution_set)
 
   
   (************ Functions for I/O *************)
