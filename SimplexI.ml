@@ -92,8 +92,6 @@ struct
    * Matrix (ie non-zero) index of the Elts.one location. Assumes the array
    * contains only one Elts.one *)
   let find_one_index (arr: elt array) (n: int) =
-    (* debug *)
-    print_array arr;
 
     let rec find (i: int) =
       if i < n then
@@ -135,7 +133,7 @@ struct
   let rec simple_solve (s: system) : (elt * system) =
     
     (********* "Instance Variables" *************)
-    (* debug *)
+    (* debug 
     print_string "Starting simple_solve \n";
     let (debug_s', (debug_non, debug_basic)) = break_system s in 
     print debug_s';
@@ -144,7 +142,7 @@ struct
     print_string "\n";
     print_string "basic: \n";
     List.iter print_int debug_basic;
-    print_string "\n";
+    print_string "\n"; *)
 
     let (mat,(non,basic)) = break_system s in
     
@@ -213,12 +211,6 @@ struct
         | Less | Equal -> find_e tl 
     in (* end find_e *)
     
-    (* debug *)
-    print_string "debuggin find_e, nonbasic variables are:  \n";
-    List.iter print_int non;
-    if find_e (List.sort compare non) = None then print_string "Returns None\n" 
-    else print_string "Doesn't return None\n";
-
     (* Helper function which finds the leaving variable in a given row *)
     let rec find_leaving (lst: int list) (row_index: int) : int option =
       match lst with
@@ -236,11 +228,6 @@ struct
       (if not(check_row 1) then 
         begin
           let solution = get_elt mat (1,p) in
-
-          (* debug *)
-          print_string "THIS IS DONE!!!!!!!\n";
-          Elts.print solution;
-          print_string "\n";
           (solution,s)
         end 
       else raise (Failure "unbounded: no solution"))
@@ -263,14 +250,16 @@ struct
         | Some x -> x in
       
       (* debug print out entering leaving variable *)
+      (*
       print_string "entering, leaving:";
       print_int e;
       print_int l;
       print_string "\n";
-
+      *)
       let s' = pivot s e l in 
       
       (* debug *)
+      (*
       let (debug_s', (debug_non, debug_basic)) = break_system s' in 
       print debug_s';
       print_string "nonbasic: \n";
@@ -278,7 +267,7 @@ struct
       print_string "\n";
       print_string "basic: \n";
       List.iter print_int debug_basic;
-      print_string "\n";
+      print_string "\n"; *)
       
       
       simple_solve s'  
@@ -326,7 +315,8 @@ struct
       | [] -> []
       | hd::tl ->
         if hd = (max_dim - 1) then filter_and_decrease tl max_dim
-        else if hd > (max_dim - 1) then (hd-1)::filter_and_decrease tl max_dim
+        else if hd > (max_dim - 1) then (raise (Failure "hd cannot be max_dim"))
+                                   (* (hd-1)::filter_and_decrease tl max_dim *)
         else (* hd < dimy - 1 *) hd::filter_and_decrease tl max_dim
     in (* end of filter_and_decrease *)
 
@@ -358,9 +348,6 @@ struct
 
     let min_index = get_min_b 1 1 in 
 
-    (* debug *)
-    print_int min_index;
-
     (* if the least b is greater than or equal to 0 no modification is 
      * needed. If it is less than 0, need to add an additional
      * slack variable and pivot so that the solution is 
@@ -368,8 +355,6 @@ struct
     match Elts.compare b_col.(min_index) Elts.zero with 
     | Greater | Equal -> 
       ( 
-      (* debug *)
-      print_string "It's greater orequal !!!";
 
       let dimx,dimy = m, (m+n-1) in
       let new_mat = empty dimx dimy in 
@@ -388,9 +373,6 @@ struct
       (* copies the constants b_i's into the last column of the new matrix *)
       let (_, col) = get_column mat n in 
       set_column new_mat dimy col; 
-      
-      (* debug *)
-      print new_mat;
 
       (* returns system *)
       Some (new_mat, ((generate_list 1 (n-1)), (generate_list (n) (n+m-2))))
@@ -401,15 +383,13 @@ struct
       (* Creates new m by m+n matrix with an additional slack variable. 
        * The objective function is now minimizing x_{m+n-1}, the slack variable
        *)
-      (* debug *)
-      print_string "Less!!!";
 
       let dimx, dimy = m, m+n in
       let new_mat = empty dimx dimy in 
       
       (* copies the coefficients of the constraint functions and objective 
        * function into the new matrix *)      
-      for c = 1 to n -1 do 
+      for c = 1 to n - 1 do 
         let (_, col) = get_column mat c in
         set_column new_mat c col 
       done;
@@ -435,20 +415,23 @@ struct
       let new_sys = (new_mat, 
                      ((dimy-1)::(generate_list 1 (n-1)), (generate_list (n) 
                                                          (dimy-2)))) in
-      
+      (* debug *)
+      print_system new_sys;
+
       (* We pivot once to return a solvable system *)
       let pivoted_new_sys = pivot new_sys (dimy-1) (min_index+n-1) in
-
-      (* debug to print out debug_mat *)
-      let (debug_mat, _) = break_system pivoted_new_sys in 
-      print debug_mat;
+      
+      (* debug *)
+      print_system pivoted_new_sys;
 
       (* We solve the system, returning the value and the new system *)
       let elt_answer, s' = simple_solve pivoted_new_sys in
+
+      (* debug *)
       print_system s';
 
       (* debug *)
-      print_string "The answer should be this: ";
+(*      print_string "The answer should be this: "; *)
 
       
 
@@ -472,6 +455,10 @@ struct
           else 
             s' in
 
+          (* debug *)
+          print_string "\n";
+          print_system correct_system;
+
           let (mat',(non_fin,basic_fin)) = break_system correct_system in
           let final_matrix = empty m (dimy-1) in
           for c = 1 to n+m-1 do
@@ -491,10 +478,18 @@ struct
           set_row final_matrix 1 slacked_obj;
 
           (* Since we removed a slack, we need to decrease our basic list *)
-          let basic_fin = filter_and_decrease basic_fin dimy in 
+          let non_fin = filter_and_decrease non_fin dimy in 
 
+          (* debug *)
+          print_string "final matrix: \n";
+          print_system (final_matrix, (non_fin, basic_fin));
 
           let _ = substitute final_matrix basic_fin in
+
+           (* debug *)
+            print_string "final matrix: \n";
+            print_system (final_matrix, (non_fin, basic_fin));
+
             Some (final_matrix,(non_fin,basic_fin))
           ) (* End of Equal match case *)
       ) (* End of Less match case *)
