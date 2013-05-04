@@ -40,8 +40,6 @@ sig
   
   val run_tests : int -> unit
 
-  val print_system : system -> unit
-
 end 
 
 module Simplex: SIMPLEX =
@@ -68,32 +66,11 @@ struct
     match a <= b with 
     | true -> a::(generate_list (a+1) b) 
     | false -> [] 
-  
-  (* helper function to print array for DEBUG *)
-  let print_array (arr: elt array) : unit = 
-    for i = 0 to (Array.length arr) -1 do
-      Elts.print arr.(i); 
-      print_string "\n";
-    done;
-    ()
 
-  (* Prints a system *)
-  let print_system (s: system) : unit =
-    let m,(n,b) = break_system s in
-    print m;
-    print_string "\nBasic Variables: ";
-    let print_l = List.iter (fun x -> print_string ((string_of_int x) ^ " ")) in
-    print_l b;
-    print_string "\nNon-Basic Variables: ";
-    print_l n;
-    ()
-    
   (* Helper function. Takes in an array and its length and returns the
    * Matrix (ie non-zero) index of the Elts.one location. Assumes the array
    * contains only one Elts.one *)
   let find_one_index (arr: elt array) (n: int) =
-    (* debug *)
-    print_array arr;
 
     let rec find (i: int) =
       if i < n then
@@ -135,10 +112,6 @@ struct
   let rec simple_solve (s: system) : (elt * system) =
     
     (********* "Instance Variables" *************)
-    (* debug *)
-    print_string "Starting simple_solve \n";
-    print_system s;
-
     let (mat,(non,basic)) = break_system s in
     
     (* We need this to be accessible everywhere *)
@@ -225,11 +198,6 @@ struct
       (if not(check_row 1) then 
         begin
           let solution = get_elt mat (1,p) in
-
-          (* debug *)
-          print_string "THIS IS DONE!!!!!!!\n";
-          Elts.print solution;
-          print_string "\n";
           let m,(n,b) = break_system s in
           let corr_sol = Elts.multiply (get_elt m (1,1)) solution in
           (corr_sol,s) 
@@ -334,9 +302,6 @@ struct
 
     let min_index = get_min_b 1 1 in 
 
-    (* debug *)
-    print_int min_index;
-
     (* if the least b is greater than or equal to 0 no modification is 
      * needed. If it is less than 0, need to add an additional
      * slack variable and pivot so that the solution is 
@@ -361,9 +326,6 @@ struct
       (* copies the constants b_i's into the last column of the new matrix *)
       let (_, col) = get_column mat n in 
       set_column new_mat dimy col; 
-      
-      (* debug *)
-      print new_mat;
 
       (* returns system *)
       Some (new_mat, ((generate_list 2 (n-1)), (generate_list (n) (n+m-2))))
@@ -411,13 +373,8 @@ struct
       (* We pivot once to return a solvable system *)
       let pivoted_new_sys = pivot new_sys (dimy-1) (min_index+n-1) in
 
-      (* debug to print out debug_mat *)
-      let (debug_mat, _) = break_system pivoted_new_sys in 
-      print debug_mat;
-
       (* We solve the system, returning the value and the new system *)
       let elt_answer, s' = simple_solve pivoted_new_sys in
-      print_system s';
 
       (* Breaking our returned system because we need access to non and basic *)
       let (m',(non',basic')) = break_system s' in
