@@ -104,7 +104,7 @@ struct
         raise (Failure "Could not find the constraint!") 
     in (* end of find function *)
     (* SHOULDNT THIS BE FIND 1 INSTEAD OF FIND 0?!?!/1?!*)
-    find 0 
+    find 1 
  
   (* Pivots a system based on the entering and leaving variables *)
   let pivot (s: system) (e: int) (l: int) : system = 
@@ -444,7 +444,7 @@ struct
       print debug_mat;
 
       (* We solve the system, returning the value and the new system *)
-      let elt, s' = simple_solve pivoted_new_sys in
+      let elt_answer, s' = simple_solve pivoted_new_sys in
       print_system s';
 
       (* debug *)
@@ -457,13 +457,14 @@ struct
       
       (* If the solution to our pivoted system is not zero, then our original 
        * system is unfeasable, so return None *)
-      match Elts.compare Elts.zero elt with
+      match Elts.compare Elts.zero elt_answer with
       | Greater | Less -> None
       | Equal -> 
         (
         let correct_system = 
-          (* Check to see if our added slack variable is a basic variable *)
+          (* Check to see if our added slack variable is a non-basic variable *)
           if List.mem (dimy-1) basic' then
+            let _ = print_string "If statement reached!\n\n\n" in
             let (len,col) = get_column m' (dimy-1) in
             let row_index = find_one_index col len in
             let entering = find_entering m' row_index non' in
@@ -630,10 +631,15 @@ struct
   let load_file (file: string) : system option =
     initialize_simplex (load_data file)
 
-  (* Load a system given a matrix *)
+  (* Load a system given a matrix. Returns non if the system is
+   * no solvable *)
   let load_matrix (m: matrix) : system option =
     initialize_simplex m 
 
+  (* Load a system in matrix format from a file. Returns none is 
+   * not solvable *)
+  let load_matrix_file (s: string) : system option =
+    load_matrix (load s)
 
   let run_tests times = ()
  
