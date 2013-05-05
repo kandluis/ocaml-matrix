@@ -21,7 +21,7 @@
 \usepackage{fancyhdr} 
 \pagestyle{fancy} 
 \renewcommand{\headrulewidth}{0.5pt} % customise the layout... 
-\lhead{CS51 Draft Spec} \chead{} \rhead{April 7, 2013} 
+\lhead{CS51 Draft Spec} \chead{} \rhead{May 5th, 2013} 
 \lfoot{} \cfoot{\thepage} \rfoot{}
 
 \frenchspacing
@@ -31,7 +31,8 @@
 \newcommand{\annot}[1]{\textbf{\color{BrickRed} [#1]}}
 
 \begin{document}
-\title{CS 51 Final Project Draft Specification---\annot{Annotated!}}
+\title{CS 51 Final Project Functional Specification{\annot{:Matrix Module and Simplex Algorithm}}
+---{\annot{Annotated!}}}
 \author{
 Luis Perez $|$ luisperez@college.harvard.edu \\ 
 Andy Shi $|$ andyshi@college.harvard.edu \\ 
@@ -43,35 +44,41 @@ Ding Zhou $|$ dzhou@college.harvard.edu
 
 %Put your stuff here
 {\annot{Note for the reader: This is the annotated version of our CS 51 
-final project specification. All annotations will appear in this color. Our changes to the actual modules and the finer points of implementation were too numerous to annotate (so there are no annotations in section 3)}}.
+Final Project Functional Specifications. All annotations will appear in this color.}}.
 
 \section{Brief Overview}
 
 Our project seeks to implement an efficient matrix library for Ocaml. The end
 goal is to utilize this matrix library in conjunction with the simplex algorithm
-to find solution to problems in linear programming. In order to accomplish this,
+to find solution {\annot{Linear Programs}}. In order to accomplish this,
 there will be multiple small checkpoints. We need to implement and efficient
 matrix representation (so as to not use the naive implementation of lists of
-lists). We also hope to provide a useful interface that allows the user to input
+lists){\annot{(Successfully accomplished. Our implementation uses array for efficienty)}}.
+ We also hope to provide a useful interface that allows the user to input
 arbitrarily large matrices effectively (possible by mapping over the entries of
-the matrix). One big challenge for the matrix library will be the implementation
+the matrix){\annot{The user can input matrices with a simple text file composed of comma
+seperated values}}. One big challenge for the matrix library will be the implementation
 of efficient algorithms for multiplication and row reduction. We expect the
 multiplication to initially consists of the standard algorithm, but will
 eventually grow into either block multiplication or Strassen {\annot{We were not
-able to implement more sophisticated multiplication algorithms}}. We might even
-implement some way to chose between the algorithms depending on the inputted
-matrices, but that would not an essential feature {\annot{We were not able to do
-this either}}.
+able to implement more sophisticated multiplication algorithms, but it seems that the current
+algorithm works fairly well}}. We might even implement some way to chose between the 
+algorithms depending on the inputted matrices, but that would not an essential feature 
+{\annot{This feature can still easily be implemented, but there simply was no time. We
+already knew this, though, by the time we wrote our Technical Specs}}.
 
 The row reduction algorithm will certainly be one of the most fundamental
 algorithms in our matrix library implementation. From our current understanding
 of simplex, it seems like it will heavily rely on row reduction {\annot{The
 simplex algorithm ended up relying on a different type of row reduction, so we
 couldn't just plug in a matrix into our row reduction algorithm. We had to do a
-lot of extra work to get simplex}}. The only algorithm we can come up with so
+lot of extra work to get simplex. Though, many of the helper functions for row
+reduction ended up being extremely useful for Simplex, so this was non as pointless
+as some might thing}}. The only algorithm we can come up with so
 far is Gauss-Jordan, though we have found some algorithms which are more suited
 for computation by computers with imprecise storage of floats {\annot{In fact,
-we just had to be careful which element to choose as a pivot}}.
+we just had to be careful which element to choose as a pivot. Futhermore, we
+ended up implementing arbitrary precision, so this became a non-issue}}.
 
 The simplex part of the problem is the main goal, but if we can get down the
 matrix module, then it appears as if the simplex algorithm should be
@@ -79,14 +86,19 @@ straightforward {\annot{This was definitely not the case}}. Eventually, we wish
 to implement a simplex module that allows the input of arbitrary linear
 equations with linear constraints, and then we parse this information into the
 corresponding matrix and finally perform the simplex algorithm on that matrix in
-order to return a solution to the specified problem.
+order to return a solution to the specified problem.{\annot{This is fully functionalt.
+Input can be made in the form of a text file with a linear program. The algorithm
+runs and not only returns the right values for simple cases, but also checks for
+cases that might initially appear to be unsolvable but aren't, and for cases which
+are unbounded.}}
 
 Other tentative goals are to implement matrices that can accept either
 arbitrarily large numbers (bignums) or arbitrarily precise floats 
 (\verb@int list * int stream@). It would also be interesting, though not
 necessary, to implement multiple algorithms for each operation and choose from
-them the one that is the best for a specific input data {\annot{We were not able
-to implement any of this functionality}}.
+them the one that is the best for a specific input data {\annot{We were able to
+implement arbitrary precisions and arbitrarily large sizes with the OCaml Nums
+library}}.
 
 \section{Feature List}
 \begin{enumerate}
@@ -122,19 +134,24 @@ found here (\url{http://www.math.ust.hk/~macheng/math111/LU_Decomposition.pdf})
 {\annot{To find the inverse, we augmented the original matrix with an identity
 matrix, then row-reduced the augmented matrix}}
 
+\item{\annot{Make a matrix from a text file. The user is now able to read in a
+text file and create a matrix.}}
+
+\item{\annot{For Information of further functionality, take a look at MatrixI.ml.}}
+
 \item Simplex Algorithm (Described in Algorithms book, in addition to the
 resources provided below)
 {\annot{Implemented mostly as specified, with some modifications from the
 Wikipedia article on simplex}}
 
 \item Matrix norm 
-{\annot{Did not implement}}
+{\annot{Did not implement since it was not necessary for Simplex.}}
 
 \item Matrix transpose
-{\annot{Implemented as specified}}
+{\annot{Implemented as specified.}}
 
 \item Trace---This is a typical trace (sum of the entries on the diagonal)
-{\annot{Implemented as specified}}
+{\annot{Implemented as specified.}}
 
 \item Determinant---found using algorithm described in Section 4.8 of Hubbard's
 \emph{Vector Calculus, Linear Algebra, and Differential Forms: A Unified
@@ -146,7 +163,7 @@ multiplying the two results}}
 \item Eigenvectors / Eigenvalues, calculated also by a method in Hubbard's book
 (this might not be necessary to carry out the simplex algorithm and we might
 abandon it if we can't figure out how to implement it in a timely manner) 
-{\annot{Did not implement}}
+{\annot{Did not implement since it was not necssary for Simplex.}}
 
 \end{enumerate}
 
@@ -157,6 +174,8 @@ abandon it if we can't figure out how to implement it in a timely manner)
 Our matrix module will actually be a functor that takes in an
 \verb@ORDERED_AND_OPERATIONAL@ module (from ps4 and moogle) so we can have
 matrices of ints, floats, or floats as streams. 
+{\annot{This actually ended up being very helpful since at the end we we able 
+to use OCaml's Num Library in order to achieve arbitrary precision and size.}}
 
 The following type definition (a la ps4) will give us a way to talk about order
 for different data types.
@@ -172,6 +191,7 @@ variety of data types. For example, we could make an
 in the signature below (for example, add instead of (+.)). Also, we have
 included some generating functions to help us with testing. 
 
+{\annot{For the updated view of this, please take a look at EltsI.ml}}
 \begin{verbatim}
 module type ORDERED_AND_OPERATIONAL
 sig
@@ -216,6 +236,7 @@ transpose, norm, and how to row reduce the matrix.
 Below each function, in comments, is a brief description of how we will
 implement the function. 
 
+{\annot{For the updated view of this, please take a look at MatrixI.ml}}
 \begin{verbatim}
 module type MATRIX = 
 sig
@@ -330,6 +351,7 @@ be easily done by either multiplying the whole inequality by -1 or by negating
 the variable. If calculating the minimum or negating the variable, we can revert
 them later.  
 
+{\annot{For the updated view of this, please take a look at SimplexI.ml}}
 \begin{verbatim}
 module type simplex
 sig
@@ -354,6 +376,7 @@ helper function
 
 A helper for the row reduction which will find the minimum element and its
 location.
+{\annot{We ended up needing many more helper functions than those shown here.}}
 
 \section{What's Next}
 

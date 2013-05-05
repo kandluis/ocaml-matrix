@@ -21,7 +21,7 @@
 \usepackage{fancyhdr} 
 \pagestyle{fancy} 
 \renewcommand{\headrulewidth}{0.5pt} % customise the layout... 
-\lhead{CS51 Final Spec} \chead{} \rhead{April 14, 2013} 
+\lhead{CS51 Final Spec} \chead{} \rhead{May 5th, 2013} 
 \lfoot{} \cfoot{\thepage} \rfoot{}
 
 \frenchspacing
@@ -31,7 +31,7 @@
 \newcommand{\annot}[1]{\textbf{\color{BrickRed} [#1]}}
 
 \begin{document}
-\title{CS 51 Final Project Final Specification---{\annot{Annotated!}}}
+\title{CS 51 Final Project Technical Specification: Matrix Module and Simplex Algorithm---{\annot{Annotated!}}}
 \author{
 Luis Perez $|$ luisperez@college.harvard.edu \\ 
 Andy Shi $|$ andyshi@college.harvard.edu \\ 
@@ -42,14 +42,18 @@ Ding Zhou $|$ dzhou@college.harvard.edu
 \maketitle
 
 %Put your stuff here
-{\annot{To the reader: Annotations are again in this form}}.
+{\annot{Note for the reader: This is the annotated version of our CS 51 
+technical project specification. All annotations will appear in this color. }}.
 
 \section{Overview}
 
 We have decided to reduce the amount of functions available to the outside
 world. The matrix module will still contain the same functionality as before,
 but only the functions necessary for the implementation of the Simplex algorithm
-will be exposed (row-reduction, for example). The main focus of the project has
+will be exposed (row-reduction, for example{\annot{Row Reduction ended up not
+being necessary. We have instead exposed a large set of library functions and,
+additionally, some functions specific to Simplex that would not be exposed otherwise.
+All of this is documented in MatrixI.ml}}). The main focus of the project has
 now shifted to having a working simplex algorithm. Other functions, such as
 finding the eigenvalues of a matrix, while interesting, have been placed in our
 “Cool Features” category. Furthermore, following the idea that Simplex is our
