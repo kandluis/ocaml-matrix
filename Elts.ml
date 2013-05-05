@@ -86,7 +86,7 @@ struct
 
   type t = Num.num
 
-  let zero = Num.num_of_int 1
+  let zero = Num.num_of_int 0
 
   let one = Num.num_of_int 1
 
@@ -115,9 +115,9 @@ struct
 
   let generate () = Num.num_of_int 3
 
-  let generate_gt a () = Num.add_num a (Num.num_of_int 1) 
+  let generate_gt a () = Num.add_num a one 
 
-  let generate_lt a () = Num.sub_num a (Num.num_of_int 1) 
+  let generate_lt a () = Num.sub_num a (subtract zero one) 
 
   let generate_between a b () = 
     if Num.gt_num a b then None 
@@ -147,5 +147,6 @@ struct
     test_compare times ;
     ()
 end
-(* module Elts = Floats *)
+
+(*module Elts = Floats *)
 module Elts = Num_floats

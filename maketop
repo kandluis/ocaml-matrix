@@ -1,1 +1,1 @@
-ocamlmktop -o matrixtop Order.cmo Elts.cmo Helpers.cmo Matrix.cmo SimplexI.cmo Interface.cmo
+ocamlmktop -o matrixtop nums.cma Order.cmo Elts.cmo Helpers.cmo Matrix.cmo SimplexI.cmo Interface.cmo

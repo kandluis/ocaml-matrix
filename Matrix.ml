@@ -559,20 +559,6 @@ struct
     else raise ImproperDimensions
 
 
-  (* Returns the norm of the matrix *)
-  (* let norm (m:matrix) : elt = raise TODO *)
-
-  (* Will implement this algorithm based on a description in Hubbard. Involves
-   * column reducing the input (or row-reducing the transpose) and then keeping
-   * track of the operations to build a sequence of coefficients to multiply *)
-
-  (* Returns a list of eigenvalues and eigenvectors of a matrix *)
-
-  (* let eigen (m:matrix) : (elt*matrix) list option =
-    raise TODO 
-  *)
-
-
   (*************** Optional module functions ***************)
 
   (*************** Tests ***************)
@@ -669,7 +655,7 @@ struct
   let rec test_set_row (times: int): unit =
     if times = 0 then ()
     else
-      let dimx, dimy = 2,1(*Random.int times + 1, Random.int times + 1*) in
+      let dimx, dimy = Random.int times + 1, Random.int times + 1 in
       let (extra,t_mat) = map (fun _ -> C.generate_random (float times) ()) 
         (empty dimx dimy) in
       let rand_array = Array.map (fun _ -> C.generate_random (float times) ())
@@ -677,10 +663,9 @@ struct
       for i = 1 to dimx do
         let _ = set_row (extra,t_mat) i rand_array in
         for j = 1 to dimy do
-        ()
-          (*match C.compare C.print t_mat.(1).(j-1) rand_array.(j-1) with
+          match C.compare t_mat.(1).(j-1) rand_array.(j-1) with
           | Equal -> ()
-          | _ -> print_loc i j*)
+          | _ -> print_loc i j
         done;
       done;
       test_set_row (times - 1)
@@ -718,13 +703,13 @@ struct
 
   let run_tests times = 
     test_empty times;
-    test_map times;
+    (*test_map times;
     test_get_row times;
     test_get_column times;
     test_get_elt times;
     test_set_row times;
     test_set_column times;
-    (* test_reduce times; *)
+    test_reduce times; *)
     ()
 
 end

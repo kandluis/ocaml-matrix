@@ -7,7 +7,7 @@ open SimplexI
 let test times = 
   let _ = EltMatrix.run_tests times in
   let _ = Elts.run_tests times in
-  let _ = Simplex.run_tests times in
+  let _ = Simplex.run_tests times in 
   print_string "\nIf no errors above, then all tests passed!\n"
 
 (* Prints a solution *)
@@ -42,8 +42,9 @@ let parse_args () : unit =
         | None -> (print_string "\nThis system has no feasable solution.\n")
         | Some sys -> 
           let _ = print_string "\nSolving your system....\n\n" in
-          let solution = Simplex.solve sys in
-          print_solution solution)
+          match Simplex.solve sys with
+          | None -> print_string "This system is unbounded. You can increase/decrease it as you please!\n"
+          | Some solution -> print_solution solution)
     with
       | Sys_error e -> usage e) 
   | _ -> usage "Incorrect inputs."

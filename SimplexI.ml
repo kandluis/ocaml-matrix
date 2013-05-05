@@ -3,7 +3,7 @@ open Matrix
 open Elts
 open EltMatrix
 
-let num_testfiles = 1
+let num_testfiles = 13
 let naming_scheme = "tests/simplex/test"
 let file_ending = ".txt"
 let results_file = "tests/simplex/results.txt"
@@ -25,19 +25,22 @@ sig
   val break_system : system -> matrix * (int list * int list)
 
   (* Loads a system from a file whose name is given by string. Returns none if
-   * the system can't be solved *)
+   * the system can't be solved (ie. is unfeasable) *)
   val load_file : string -> system option
 
   (* Loads a system from a matrix. Returns none if the system can't be solved *)
   val load_matrix : matrix -> system option
  
-  (* Finds the optimum solution to the system *)
-  val solve : system -> elt * point 
+  (* Finds the optimum solution to the system. Returns None if the solution is unbounded *)
+  val solve : system -> (elt * point) option 
   
+  (* Runs the tests *)
   val run_tests : int -> unit
 
+  (* Prints a point *)
   val print_point : point -> unit
 
+  (* Prints a system. ie, the Matrix and the Basic, Non Basic sets *)
   val print_system : system -> unit
 
 end 
@@ -140,7 +143,7 @@ struct
 
   (* This solves the simple (ie. solvable) Simplex case. Returns the solution
    * and a system *)
-  let rec simple_solve (s: system) : (elt * system) =
+  let rec simple_solve (s: system) : (elt * system) option =
     
     (********* "Instance Variables" *************)
     let (mat,(non,basic)) = break_system s in
@@ -231,9 +234,10 @@ struct
           let solution = get_elt mat (1,p) in
           let m,(n,b) = break_system s in
           let corr_sol = Elts.multiply (get_elt m (1,1)) solution in
-          (corr_sol,s) 
+          Some (corr_sol,s) 
         end 
-      else raise (Failure "unbounded: no solution"))
+      else 
+        None)
     | Some e -> 
       (
       (* gets our entering column *)
@@ -393,7 +397,7 @@ struct
 
       (* Set the top row as the new constraint *)
       let constraint' = Array.make dimy Elts.zero in
-      constraint'.(0) <- Elts.one;
+      constraint'.(0) <- get_elt mat (1,1);
       constraint'.(dimy-2) <- elts_neg_one;
       set_row new_mat 1 constraint';
       
@@ -406,7 +410,11 @@ struct
       let pivoted_new_sys = pivot new_sys (dimy-1) (min_index+n-1) in
 
       (* We solve the system, returning the value and the new system *)
-      let elt_answer, s' = simple_solve pivoted_new_sys in
+      let elt_answer, s' = 
+        match simple_solve pivoted_new_sys with
+        | None -> raise (Failure "Initialization failed. Created system was unbounded!")
+        | Some system -> system 
+      in
 
       (* Breaking our returned system because we need access to non and basic *)
       let (m',(non',basic')) = break_system s' in
@@ -448,7 +456,7 @@ struct
           set_row final_matrix 1 slacked_obj;
 
           (* Since we removed a slack, we need to decrease our basic list *)
-          let non_fin = filter_and_decrease basic_fin dimy in 
+          let non_fin = filter_and_decrease non_fin dimy in 
 
 
           let _ = substitute final_matrix basic_fin in
@@ -490,11 +498,13 @@ struct
     get_vals basic 2
 
   (* Actually solves a system *)
-  let solve (s: system) : elt * point =
-    let (elt,s') = simple_solve s in
-    let mat,(non,basic) = break_system s' in
-    let solution_set = find_vals mat (List.sort compare basic) (List.length non) in
-    (elt, solution_set)
+  let solve (s: system) : (elt * point) option =
+    match simple_solve s with
+    | None -> None
+    | Some (elt,s') ->
+      let mat,(non,basic) = break_system s' in
+      let solution_set = find_vals mat (List.sort compare basic) (List.length non) in
+      Some (elt, solution_set)
 
   
   (************ Functions for I/O *************)
@@ -651,8 +661,7 @@ struct
 
   (* Because of flaots and None, we compare only the integer parts of the results *)
   let comparison (curr: bool) (s1: string) (s2: string) : bool =
-    (curr && s1 = s2) || (Elts.trim (Elts.from_string s1)) = 
-      (Elts.trim (Elts.from_string s2))
+    curr && s1 = s2 || (Elts.from_string s1) = (Elts.from_string s2) 
 
   (* test function for siplex. Essentially tests all of our other functions as well
    * since Simplex relies so heavily on each and every one of them *)
@@ -668,13 +677,19 @@ struct
         match load_file filename with
         | None -> "None"::testing tl
         | Some sys -> 
-          let (e,p) = solve sys in
-          ((Elts.to_string e) ^ "," ^ point_to_string p)::testing tl
+          match solve sys with
+          | None -> "Unbounded"::testing tl
+          | Some (e,p) ->
+            ((Elts.to_string e) ^ "," ^ point_to_string p)::testing tl
     in
     if (times > 0) then
       let test_results = testing test_files in
+      try 
       let _ = assert(List.fold_left2 comparison true test_results results) in
-      test_simplex (times - 1)
+      test_simplex (times - 1) with 
+      |Assert_failure _ -> 
+        let _ = List.iter print_string test_results in
+        List.iter print_string results
     else 
       ()
 
