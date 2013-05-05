@@ -460,7 +460,7 @@ struct
   (* Assumes the passed in list is in increasing order for efficiency's sake*)
   let find_vals (mat: matrix) (basic: int list) (num_vars: int) : point =
     (* traverses a list until it reaches the value we're looking for. If so
-     * returns it in point format *)
+     * returns it in point format along with list still needed to traverse *)
     let max_column = num_vars + 1 in
     let rows,cols = get_dimensions mat in
     let rec get_val (lst: int list) (column: int) : point * int list =
@@ -614,8 +614,8 @@ struct
     let m = load_data file in
     initialize_simplex m
 
-  (* Load a system given a matrix. Returns non if the system is
-   * no solvable *)
+  (* Load a system given a matrix. Returns none if the system is
+   * not solvable *)
   let load_matrix (m: matrix) : system option =
     initialize_simplex m 
 
@@ -625,6 +625,8 @@ struct
     load_matrix (load s)
 
   (******************* TESTING ************************)
+  (* Creates a list of the test files according to the specified number
+   * at the top of the file *)
   let test_files = 
     let rec make_file_list (num: int) (curr: string list) =
       if num < num_testfiles then
@@ -634,6 +636,7 @@ struct
     in
     make_file_list num_testfiles [] 
 
+  (* Loads the expected result list from the specified results_file *)
   let results = 
     let rec load_results (chan: in_channel) (built: string list) : string list =
       try
@@ -645,10 +648,13 @@ struct
     let inchan = open_in results_file in
     load_results inchan []
 
+  (* Because of flaots and None, we compare only the integer parts of the results *)
   let comparison (curr: bool) (s1: string) (s2: string) : bool =
     (curr && s1 = s2) || (Elts.trim (Elts.from_string s1)) = 
       (Elts.trim (Elts.from_string s2))
 
+  (* test function for siplex. Essentially tests all of our other functions as well
+   * since Simplex relies so heavily on each and every one of them *)
   let rec test_simplex (times: int) : unit =
     let rec testing (lst: string list) : string list =
       match lst with
