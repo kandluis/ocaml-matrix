@@ -60,7 +60,8 @@ finding the eigenvalues of a matrix, while interesting, have been placed in our
 main focus, additional functionality such as parsing input, providing arbitrary
 float precision and/or providing a matrix implementation with bignums has been
 degraded in importance. All of our attention will be focused on creating a
-working simplex algorithm. {\annot{All of this happened, except for the parsing input part. We were able to parse inputs from plaintext files}}.
+working simplex algorithm. {\annot{All of this happened, even the parsing input part. 
+We were able to parse inputs from plaintext files}}.
 
 \section{Detailed Description}
 \subsection{Signatures and Interfaces}
@@ -73,7 +74,12 @@ as defined below. In our beta implementations, we plan to simply use Ocaml
 floats as the elements, but, if time allows, the plan is to make the simplex
 algorithm rely on abstract as matrices a possible so that we can change the
 \verb@ORDERED_AND_OPERATIONAL@ to something more efficient and/or accurate.
+{\annot{In the end, we ended up using the Nums OCaml library in order to obtain
+arbitrary precison and size with our elements. We made this decision late in the
+coding, but because we coded everything abstractly, changing from Floats to Nums
+was as simple as exposing the right files and setting the right modules}}
 
+{\annot{Updated version of this can be found in EltsI.ml}}
 \begin{verbatim}
 type order = Equal | Less | Greater
 
@@ -125,15 +131,14 @@ module. Additionally, the \verb@ORDERED_AND_OPERATIONAL@ module will more than
 likely have additional values and functions not exposed in its signature. For
 example, we plan to define the “epsilon for comparison” for floats inside the
 module, but we keep it hidden simply because it's not necessary anywhere else.
-
-Users will have no direct access to this module, and therefore there are not
-standards that need to be enforced (other than those in place by the interface).
+{\annot{This was mostly implemented as described.}}
 
 The following signature is the one for the Matrix module, and it also the one
 that has changed the most. Most of the functions we originally had were not
 necessary for the simplex algorithm, so we have made them ``cool features''
 which we will attempt to implement if we have time.
 
+{\annot{This Module changed significantly. For an updated look, see MatrixI.ml}}
 \begin{verbatim}
 module type MATRIX =
 sig
@@ -240,7 +245,8 @@ val eigen: matrix -> (elt *matrix) list option
 {\annot{We were able to implement inverse, transpose, trace, and determinant.
 The first 3 functions we were able to implement as specified, but the
 determinant was implemented by decomposing it into upper and lower triangular
-matrices}}
+matrices. The functions that weren't implemented were mostly left behind because
+they were not essential to the Simplex Algorithm}}
 
 \subsubsection{Simplex Algorithm}
 

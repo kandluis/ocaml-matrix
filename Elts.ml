@@ -46,7 +46,7 @@ struct
 
   let divide = (/.) 
 
-  let print a = print_string (to_string a)
+  let print a = print_string ((to_string a) ^ "\n")
 
   let trim = int_of_float
 
@@ -135,7 +135,7 @@ struct
     let new_bound = int_of_float bound in 
     Num.num_of_int (Random.int new_bound)
 
-  let print a = print_string (to_string a)
+  let print a = print_string ((to_string a) ^ "\n")
 
   let rec test_compare (times:int) : unit =
     let random t = Num.num_of_int (Random.int t - Random.int t) in
