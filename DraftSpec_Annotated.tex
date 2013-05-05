@@ -262,7 +262,7 @@ sig
   (* Transposes a matrix. If the input has dimensions m x n, the output will
    * have dimensions n x m *)
   val transpose: matrix -> matrix
-  (* Will basically ``flip’’ the indices of the input matrix
+  (* Will basically ``flip'' the indices of the input matrix
 
   (* Returns the trace of the matrix *)
   val trace: matrix -> elt
@@ -323,7 +323,7 @@ point in 1 and any other entry in the column is zero. Repeat the process again
 until the top row consists of only nonnegative values. The first entry in the
 last column is the maximum. In addition, for any column consisting of all zeroes
 and a one, we can find the value of the corresponding variable by looking at the
-value of the row containing the one. If the column doesn’t consists of zeroes
+value of the row containing the one. If the column doesn't consists of zeroes
 and a one, then the value of the corresponding variable is zero. 
 
 This algorithm also works with variables that are negative, inequalities where
