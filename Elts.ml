@@ -8,13 +8,16 @@ struct
 
   type t = float
   
-  (* Need an epsilon to compare floats *)
+  (* Need an epsilon to compare floats. We define the precion here *)
   let epsilon = 0.000001
 
   let zero = 0.
 
   let one = 1.
 
+  (* We compare based on epsilon. We first find the distance
+   * between the two numbers and divide my the maximum to see
+   * if that's below epsilon. *)
   let compare a b =
     let a', b' = abs_float a, abs_float b in
     if a' < epsilon && b' < epsilon then 
@@ -74,6 +77,7 @@ struct
       | Order.Less -> assert(x < y)
 
 
+  (* Honestly, probably don't need to test the other functions *)
   let run_tests (times: int) : unit =
     test_compare times ;
     ()
@@ -126,6 +130,7 @@ struct
   let generate_x (x:float) () = 
     let new_x = int_of_float x in Num.num_of_int new_x
 
+  (* This actually only generates integers. *)
   let generate_random (bound: float) () = 
     let new_bound = int_of_float bound in 
     Num.num_of_int (Random.int new_bound)
@@ -148,5 +153,7 @@ struct
     ()
 end
 
+
+(*** HERE IS WHERE YOU PICK THE MODULE *)
 (*module Elts = Floats *)
 module Elts = Num_floats

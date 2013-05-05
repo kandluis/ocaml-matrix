@@ -13,6 +13,7 @@ sig
   (* The one element *)
   val one: t
 
+  (* ts must be comparable *)
   val compare : t -> t -> Order.order
 
   (* Converts a t to a string *)
@@ -21,6 +22,7 @@ sig
   (* Converts a string to a t *)
   val from_string : string -> t
 
+  (* Basic mathematical operations must be possible *)
   val add: t -> t -> t
 
   val subtract: t -> t -> t
@@ -29,11 +31,10 @@ sig
 
   val divide: t -> t -> t
 
-
-  (* For testing *)
   (* Prints a t *)
   val print: t -> unit
 
+  (************* For testing ***************)
   (* Generates the same t each time when called *)
   val generate: unit -> t
 

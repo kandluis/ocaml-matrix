@@ -1,9 +1,6 @@
 open Order
 open Elts
-
-(* We don't specify a type so we can generilize this to both the library
- * and the SimplexMatrix module. We don't want simplex having access too 
- * anything more than what it needs - following our obfuscation model *)
+(* Functor so we can Abstract away! *)
 module MakeMatrix (C: EltsI.ORDERED_AND_OPERATIONAL) : 
   (MatrixI.MATRIX with type elt = C.t) =
 struct
@@ -114,21 +111,24 @@ struct
 
   (* similar to map, but applies to function to the entire matrix 
    * Returns a new matrix *)
-  let map (f: elt -> elt) ((dim,m): matrix) : matrix = 
+  let map (f: elt -> elt) (mat: matrix) : matrix =
+    let (dim,m) = mat in 
     (dim, Array.map (Array.map f) m)
 
   (* Just some wrapping of Array.iter made for Matrices! *)
-  let iter (f: elt -> unit) ((dim,m): matrix) : unit =
+  let iter (f: elt -> unit) (mat: matrix) : unit =
+    let dim,m = mat in
     Array.iter (Array.iter f) m
 
   (* Just some wrapping of Array.iteri. Useful for pretty
    * printing matrix. The index is (i,j). NOT zero-indexed *)
-  let iteri (f: int -> int -> 'a -> unit) ((dim,m): matrix) : unit =
+  let iteri (f: int -> int -> elt -> unit) (mat: matrix) : unit =
+    let dim,m = mat in
     Array.iteri (fun i row -> Array.iteri (fun j e -> f (i+1) (j+1) e) row) m 
 
   (* folds over each row using base case u and function f *)
   (* could be a bit more efficient? *)
-  let reduce (f: 'a -> 'b -> 'a) (u: 'a) (((p,q),m): matrix) : 'b =
+  let reduce (f: 'a -> elt -> 'a) (u: 'a) (((p,q),m): matrix) : 'a =
     let total = ref u in
       for i = 0 to p - 1 do
         for j = 0 to q - 1 do
@@ -544,19 +544,22 @@ struct
 
   (* Computes the determinant of a matrix *)
   let determinant (m: matrix) : elt =
-    let ((n,p),m') = m in
-    if n = p then 
-      let rec triangualar_det (a,mat) curr_index acc =
-        if curr_index < n then
-          let acc' = C.multiply mat.(curr_index).(curr_index) acc in
-          triangualar_det (a,mat) (curr_index + 1) acc' 
-        else acc in
-      let ((dim1,l),(dim2,u),(dim3,p)),s = lu_decomposition m in
-      let det1, det2 = triangualar_det (dim1,l) 0 C.one, 
-        triangualar_det (dim2,u) 0 C.one in
-      if s mod 2 = 0 then C.multiply det1 det2 
-      else C.subtract C.zero (C.multiply det1 det2)
-    else raise ImproperDimensions
+    try 
+      let ((n,p),m') = m in
+      if n = p then 
+        let rec triangualar_det (a,mat) curr_index acc =
+          if curr_index < n then
+            let acc' = C.multiply mat.(curr_index).(curr_index) acc in
+            triangualar_det (a,mat) (curr_index + 1) acc' 
+          else acc in
+        let ((dim1,l),(dim2,u),(dim3,p)),s = lu_decomposition m in
+        let det1, det2 = triangualar_det (dim1,l) 0 C.one, 
+          triangualar_det (dim2,u) 0 C.one in
+        if s mod 2 = 0 then C.multiply det1 det2 
+        else C.subtract C.zero (C.multiply det1 det2)
+      else raise ImproperDimensions
+    with
+    | Failure "create_ratio infinite or undefined rational number" -> C.zero
 
 
   (*************** Optional module functions ***************)
@@ -564,6 +567,18 @@ struct
   (*************** Tests ***************)
   let print_loc i j =  print_string ("Failed @ " ^ string_of_int i ^ " and " ^
             string_of_int j)
+
+  (* Generates a linearly independent matrix *)
+  let gen_non_independent x y =
+    let mat = empty x y in
+    for i = 1 to x-1 do
+      for j = 1 to y do
+        set_elt mat (i,j) (C.generate_random (float (x + y)) ()) 
+      done;
+    done;
+    let (_,row) = get_row mat 1 in
+    let _ = set_row mat x row in 
+    mat
 
   let rec test_empty (times: int) : unit =
     if times = 0 then ()
@@ -699,6 +714,69 @@ struct
       assert(e_result = result);
       test_reduce (times - 1)
 
+  let rec test_mult (times: int) : unit =
+    if times = 0 then ()
+    else
+      let dimx = Random.int times + 1 in 
+      let identity = create_identity dimx in
+      let t_mat = map (fun x -> C.generate_random (float times) ())
+        (empty dimx dimx) in
+      let result = mult identity t_mat in
+      for i = 1 to dimx do
+        for j = 1 to dimx do
+          assert(get_elt t_mat (i,j) = get_elt result (i,j))
+        done;
+      done;
+      test_mult (times - 1)
+
+  let rec test_add (times: int) : unit =
+    if times = 0 then ()
+    else 
+      let dimx= Random.int times + 1 in 
+      let identity = create_identity dimx  in
+      let t_mat = map (fun x -> C.generate_random (float times) ()) 
+        (empty dimx dimx)  in
+      let result = add identity t_mat in
+      for i = 1 to dimx do
+        for j = 1 to dimx do
+          if i <> j then assert(get_elt t_mat (i,j) = get_elt result (i,j))
+         else assert((C.add C.one (get_elt t_mat (i,j))) = get_elt result (i,j))
+        done;
+      done;
+      test_add (times - 1)
+
+  let rec test_scale (times: int) : unit =
+    if times = 0 then ()
+    else 
+      let dimx,dimy = Random.int times + 1, Random.int times + 1 in 
+      let scalar = C.generate_random (float times) () in
+      let t_mat = map (fun x -> C.generate_random (float times) ()) 
+        (empty dimx dimy)  in
+      let result = scale t_mat scalar in
+      for i = 1 to dimx do
+        for j = 1 to dimy do
+         assert((C.multiply scalar (get_elt t_mat (i,j))) = get_elt result (i,j))
+        done;
+      done;
+      test_add (times - 1)
+
+  let rec test_row_reduce (times: int) : unit =
+    let dimx = Random.int times + 2 in
+    let independent = gen_non_independent dimx dimx in
+    let identity = create_identity dimx in
+    let reduced = row_reduce independent in
+    try 
+      assert (not(reduced = identity))
+    with Assert_failure _ -> (print independent;print reduced;print identity)
+
+  let rec test_determinamnt (times: int) : unit =
+    let dimx = Random.int times + 2 in
+    let independent = gen_non_independent dimx dimx in 
+    let det = determinant independent in
+    assert(det = C.zero)
+      
+
+
   (*************** End Test Functions ***************)
 
   let run_tests times = 
@@ -710,6 +788,11 @@ struct
     test_set_row times;
     test_set_column times;
     test_reduce times; 
+    test_add times;
+    test_mult times;
+    test_scale times;
+    test_row_reduce times;
+    test_determinamnt times;
     ()
 
 end

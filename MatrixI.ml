@@ -55,7 +55,6 @@ sig
 
   (* Returns the trace of the matrix *)
   val trace: matrix -> elt 
-
   
   (******** OPERATIONS ON TWO MATRICES ********)
   (* Adds two matrices. They must have the same dimensions *)
@@ -88,6 +87,11 @@ sig
 
   (* Runs tests on the Matrix Module *)
   val run_tests : int -> unit
+
+  (************** Other Library Functions *************)
+  val iter : (elt -> unit) -> matrix -> unit
+
+  val iteri : (int -> int -> elt -> unit) -> matrix -> unit
 
   (************** Input/ Output Functions *************)
   (* Generates a matrix from a string. *)
