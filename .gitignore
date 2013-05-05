@@ -15,6 +15,7 @@
 *.out
 *.pdf
 *.ps
+*.gz
 *~
 \#*\#
 /.emacs.desktop
