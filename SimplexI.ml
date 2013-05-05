@@ -3,7 +3,7 @@ open Matrix
 open Elts
 open EltMatrix
 
-let num_testfiles = 21
+let num_testfiles = 22
 let naming_scheme = "tests/simplex/test"
 let file_ending = ".txt"
 let results_file = "tests/simplex/results.txt"
@@ -689,7 +689,10 @@ struct
         let _ = assert(List.fold_left2 comparison true test_results results) in
         test_simplex (times - 1) 
       with 
+      (* Sometimes the user types in an extra space or \n char. We just ignore this *)
       | Elts.NonElt -> ()
+
+      (* Print out the location of the failure *)
       | Assert_failure _ -> 
         let _ = List.iter print_string test_results in
         List.iter print_string results
