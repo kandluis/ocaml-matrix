@@ -48,6 +48,7 @@ end
 module Simplex: SIMPLEX =
 struct
 
+  (* Raised whenever the textfile is not in the specified format *)
   exception ImproperInput of string
 
   (* This is so we can construct an arbitrarily long touple to return the solution set *)
@@ -428,7 +429,6 @@ struct
         let correct_system = 
           (* Check to see if our added slack variable is a non-basic variable *)
           if List.mem (dimy-1) basic' then
-            let _ = print_string "\n\nIf statement reached!\n\n" in
             let (len,col) = get_column m' (dimy-1) in
             let row_index = find_one_index col len in
             let entering = find_entering m' row_index non' in
