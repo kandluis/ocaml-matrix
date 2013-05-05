@@ -51,11 +51,11 @@ sig
 
   (* Special test function specifically for float. When passed in a float x,
    * generates an abstract float *)
-  val generate_x: float -> unit -> t 
+  val generate_x: float -> unit -> t
 
   (* Special function for testing. Generates a random t between the zero element
    * and the bound (the argument) inclusive *)
-  val generate_random : float -> unit -> t
+  val generate_random : float -> unit -> t 
 
   val run_tests : int -> unit
   

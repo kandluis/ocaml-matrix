@@ -724,7 +724,7 @@ struct
     test_get_elt times;
     test_set_row times;
     test_set_column times;
-    test_reduce times;
+    (* test_reduce times; *)
     ()
 
 end
