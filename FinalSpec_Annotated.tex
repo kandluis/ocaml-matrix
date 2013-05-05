@@ -56,7 +56,7 @@ additionally, some functions specific to Simplex that would not be exposed other
 All of this is documented in MatrixI.ml}}). The main focus of the project has
 now shifted to having a working simplex algorithm. Other functions, such as
 finding the eigenvalues of a matrix, while interesting, have been placed in our
-“Cool Features” category. Furthermore, following the idea that Simplex is our
+``Cool Features'' category. Furthermore, following the idea that Simplex is our
 main focus, additional functionality such as parsing input, providing arbitrary
 float precision and/or providing a matrix implementation with bignums has been
 degraded in importance. All of our attention will be focused on creating a
@@ -129,7 +129,7 @@ module will be passed in as a constructor to the Matrix module (defined later),
 which will exposed only that while is, once again, necessary for the Simplex
 module. Additionally, the \verb@ORDERED_AND_OPERATIONAL@ module will more than
 likely have additional values and functions not exposed in its signature. For
-example, we plan to define the “epsilon for comparison” for floats inside the
+example, we plan to define the epsilon for comparison for floats inside the
 module, but we keep it hidden simply because it's not necessary anywhere else.
 {\annot{This was mostly implemented as described.}}
 
@@ -207,6 +207,14 @@ val dot -> matrix -> matrix
 row or column, perform basic row operations, etc. They all made our lives easier
 at some point in the project}}.
 
+{\annot{We implemented row reduction using a lot of different helper functions.
+We could not use the ``standard'' version of row reduction because that one
+would introduce round-off errors (we were using floats at the time). This meant
+we had to swap rows such that we were dividing rows by the element with the
+greatest possible absolute value (when we try and make a 1 in a certain column
+of a row). This minimizes round-off error, which we thought would be a huge
+problem. Also, using the Ocaml nums library drastically improved our accuracy}}.
+
 The following are cool features which we will try to implement if we have time. 
 
 \textbf{Cool Features}:
@@ -255,7 +263,7 @@ Given inequalities, using the simplex algorithm, we can find the maximum value
 of a given expression. What the simplex algorithm does is that it takes in
 several linear inequalities and writes them so that they are equalities. For
 instance $5x + 7y \leq 10$ would be $5x + 7y + s = 10$ where $s \geq 0$ is the
-slack variable. Then it takes all these equations and puts them a a matrix where
+slack variable. Then it takes all these equations and puts them a matrix where
 each entry represents the coefficient of the variable in the expression. The
 first row represents the equation we are optimizing. The final column is the
 constant values of each equation. Then we will do a series of computations so
@@ -272,12 +280,12 @@ point in 1 and any other entry in the column is zero. Repeat the process again
 until the top row consists of only nonnegative values. The first entry in the
 last column is the maximum. In addition, for any column consisting of all zeroes
 and a one, we can find the value of the corresponding variable by looking at the
-value of the row containing the one. If the column doesn’t consists of zeroes
+value of the row containing the one. If the column doesn't consists of zeroes
 and a one, then the value of the corresponding variable is zero. 
 
 This algorithm also works with variables that are negative, inequalities where
 the unknowns is greater than a constant, and minimum of the equation. This can
-be easily done by either multiplying the whole inequality by -1 or by negating
+be easily done by either multiplying the whole inequality by $-1$ or by negating
 the variable. If calculating the minimum or negating the variable, we can revert
 them later.  
 
@@ -366,7 +374,7 @@ Matrix.ml.
 We are currently using github for version control. Our repository can be found
 here, under the organization Fantastic Four
 (\url{www.github.com/Fantastic-Four/ocaml-matrix}).We had some difficulties at
-first getting the repo set up on everyone’s computers but we fixed that over the
+first getting the repo set up on everyone's computers but we fixed that over the
 weekend and we should be good to go.
 
 \end{document}
