@@ -3,7 +3,7 @@ open Matrix
 open Elts
 open EltMatrix
 
-let num_testfiles = 0
+let num_testfiles = 1
 let naming_scheme = "tests/simplex/test"
 let file_ending = ".txt"
 let results_file = "tests/simplex/results.txt"
@@ -393,6 +393,7 @@ struct
 
       (* Set the top row as the new constraint *)
       let constraint' = Array.make dimy Elts.zero in
+      constraint'.(0) <- Elts.one;
       constraint'.(dimy-2) <- elts_neg_one;
       set_row new_mat 1 constraint';
       
@@ -419,7 +420,7 @@ struct
         let correct_system = 
           (* Check to see if our added slack variable is a non-basic variable *)
           if List.mem (dimy-1) basic' then
-            let _ = print_string "If statement reached!\n\n\n" in
+            let _ = print_string "\n\nIf statement reached!\n\n" in
             let (len,col) = get_column m' (dimy-1) in
             let row_index = find_one_index col len in
             let entering = find_entering m' row_index non' in
@@ -447,7 +448,7 @@ struct
           set_row final_matrix 1 slacked_obj;
 
           (* Since we removed a slack, we need to decrease our basic list *)
-          let non_fin = filter_and_decrease non_fin dimy in 
+          let non_fin = filter_and_decrease basic_fin dimy in 
 
 
           let _ = substitute final_matrix basic_fin in
@@ -634,7 +635,7 @@ struct
         make_file_list (num + 1) (name::curr)
       else curr
     in
-    make_file_list num_testfiles [] 
+    make_file_list 0 [] 
 
   (* Loads the expected result list from the specified results_file *)
   let results = 
@@ -660,10 +661,13 @@ struct
       match lst with
       | [] -> []
       | filename::tl -> 
+        let _ = 
+          if times = 1 then 
+            print_string ("\nTested " ^ filename ^ "\n")
+          else print_string "." in
         match load_file filename with
         | None -> "None"::testing tl
         | Some sys -> 
-          let _ = print_string "\nSolving your system....\n\n" in
           let (e,p) = solve sys in
           ((Elts.to_string e) ^ "," ^ point_to_string p)::testing tl
     in
@@ -675,6 +679,7 @@ struct
       ()
 
   let run_tests times = 
+    print_string "\nTesting Simplex with provided files.";
     test_simplex times;
     ()
  

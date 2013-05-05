@@ -28,8 +28,8 @@ let parse_args () : unit =
     Printf.printf ("usage: %s arguments.\nError-> %s\n") 
      Sys.argv.(0) s; print_string message; exit 1 in
   if Array.length Sys.argv <> 3 then usage "Incorrect number of arguments.";
-  match Sys.argv.(1) with
-  | "run tests" -> 
+  match String.lowercase (Sys.argv.(1)) with
+  | "run tests" | "run_tests" -> 
     (try 
       let times = int_of_string Sys.argv.(2) in
       test times
