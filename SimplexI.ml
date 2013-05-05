@@ -3,7 +3,7 @@ open Matrix
 open Elts
 open EltMatrix
 
-let num_testfiles = 13
+let num_testfiles = 21
 let naming_scheme = "tests/simplex/test"
 let file_ending = ".txt"
 let results_file = "tests/simplex/results.txt"
@@ -674,6 +674,7 @@ struct
           if times = 1 then 
             print_string ("\nTested " ^ filename ^ "\n")
           else print_string "." in
+          let _ = flush_all () in
         match load_file filename with
         | None -> "None"::testing tl
         | Some sys -> 
@@ -685,9 +686,11 @@ struct
     if (times > 0) then
       let test_results = testing test_files in
       try 
-      let _ = assert(List.fold_left2 comparison true test_results results) in
-      test_simplex (times - 1) with 
-      |Assert_failure _ -> 
+        let _ = assert(List.fold_left2 comparison true test_results results) in
+        test_simplex (times - 1) 
+      with 
+      | Elts.NonElt -> ()
+      | Assert_failure _ -> 
         let _ = List.iter print_string test_results in
         List.iter print_string results
     else 
