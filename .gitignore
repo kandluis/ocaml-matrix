@@ -7,6 +7,14 @@
 *.cmx
 *.cmxs
 *.cmxa
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.log
+*.out
+*.pdf
+*.ps
 *~
 \#*\#
 /.emacs.desktop

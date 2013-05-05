@@ -116,14 +116,17 @@ Alternative Testing: The Custom Toplevel
   or you can just open each module. 
 
   The Matrix Module is called EltMatrix and is found inside of Matrix.ml. 
-    The signature is found in MatrixI.ml
-  The Elts modules is called Elts and is found inside Elts.ml
-    The signature is found in EltsI.ml
-  The Simplex module is called Simplex and is found inside SimplexI.ml
-    The signature is found in SimplexI.ml
+    The signature is found in MatrixI.ml.
+  The Elts modules is called Elts and is found inside Elts.ml.
+    The signature is found in EltsI.ml.
+  The Simplex module is called Simplex and is found inside SimplexI.ml.
+    The signature is found in SimplexI.ml.
+
+  For sample matrix files (to use with EltMatrix.load), take a look at the
+  files found inside of "tests/matrix"
 
 
-
+  
 Best Wishes,
   Fantastic Four Team
 

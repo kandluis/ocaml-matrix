@@ -3,6 +3,8 @@ open Matrix
 open Elts
 open EltMatrix
 
+
+(* Change these to be the appropriate values for testing *)
 let num_testfiles = 22
 let naming_scheme = "tests/simplex/test"
 let file_ending = ".txt"
