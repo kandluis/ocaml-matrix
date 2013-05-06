@@ -73,12 +73,13 @@ of simplex, it seems like it will heavily rely on row reduction {\annot{The
 simplex algorithm ended up relying on a different type of row reduction, so we
 couldn't just plug in a matrix into our row reduction algorithm. We had to do a
 lot of extra work to get simplex. Though, many of the helper functions for row
-reduction ended up being extremely useful for Simplex, so this was non as pointless
-as some might thing}}. The only algorithm we can come up with so
-far is Gauss-Jordan, though we have found some algorithms which are more suited
-for computation by computers with imprecise storage of floats {\annot{In fact,
-we just had to be careful which element to choose as a pivot. Futhermore, we
-ended up implementing arbitrary precision, so this became a non-issue}}.
+reduction ended up being extremely useful for Simplex, so this was not as
+pointless as some might think}}. The only algorithm we can come up with so far
+is Gauss-Jordan, though we have found some algorithms which are more suited for
+computation by computers with imprecise storage of floats {\annot{In fact, we
+just had to be careful which element to choose as a pivot. Futhermore, we ended
+up implementing arbitrary precision, via Ocaml's num library,  so this became a
+non-issue}}.
 
 The simplex part of the problem is the main goal, but if we can get down the
 matrix module, then it appears as if the simplex algorithm should be
