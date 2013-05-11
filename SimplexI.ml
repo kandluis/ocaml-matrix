@@ -256,7 +256,7 @@ struct
 
       let l =
         match find_leaving basic row_index with
-        | None -> raise (Failure "Could not find entering variable")
+        | None -> raise (Failure "Could not find leaving variable")
         | Some x -> x in
       
       let s' = pivot s e l in 
@@ -429,7 +429,7 @@ struct
       | Equal -> 
         (
         let correct_system = 
-          (* Check to see if our added slack variable is a non-basic variable *)
+          (* Check to see if our added slack variable is a basic variable *)
           if List.mem (dimy-1) basic' then
             let (len,col) = get_column m' (dimy-1) in
             let row_index = find_one_index col len in
