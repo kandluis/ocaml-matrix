@@ -1,7 +1,6 @@
 open Order
-open Matrix
 open Elts
-open EltMatrix
+open Matrix.EltMatrix
 
 
 (* Change these to be the appropriate values for testing *)
@@ -16,15 +15,11 @@ sig
   (* Special exception to provide more information to the user *)
   exception ImproperInput of string
 
-  (* This is a Simplex system *)
+  (* Allows representation of Empty, Point (x,y,..), and Many(x,y,...) *)
   type point
 
+  (* This is a Simplex system *)
   type system
-
-  (* These next two were exposed for testing *)
-  val make_system : matrix -> (int list * int list) -> system
-
-  val break_system : system -> matrix * (int list * int list)
 
   (* Loads a system from a file whose name is given by string. Returns none if
    * the system can't be solved (ie. is unfeasable) *)
@@ -36,14 +31,14 @@ sig
   (* Finds the optimum solution to the system. Returns None if the solution is unbounded *)
   val solve : system -> (elt * point) option 
   
-  (* Runs the tests *)
-  val run_tests : int -> unit
-
-  (* Prints a point *)
+  (* Prints a point *)      
   val print_point : point -> unit
 
   (* Prints a system. ie, the Matrix and the Basic, Non Basic sets *)
   val print_system : system -> unit
+
+  (* Runs the tests *)
+  val run_tests : int -> unit
 
 end 
 

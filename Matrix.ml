@@ -1,5 +1,6 @@
 open Order
 open Elts
+
 (* Functor so we can Abstract away! *)
 module MakeMatrix (C: EltsI.ORDERED_AND_OPERATIONAL) : 
   (MatrixI.MATRIX with type elt = C.t) =
