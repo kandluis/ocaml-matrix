@@ -37,3 +37,10 @@ tramp
 simplex
 matrixtop
 simplextop
+
+
+
+_build
+setup.data
+Makefile_old
+*.docdir

@@ -1,43 +1,38 @@
-# This program
+# OASIS_START
+# DO NOT EDIT (digest: bc1e05bfc8b39b664f29dae8dbd3ebbb)
 
-PROG = simplex
+SETUP = ocaml setup.ml
 
-# Setup
+build: setup.data
+	$(SETUP) -build $(BUILDFLAGS)
 
-LIBS = \
-	nums.cma
+doc: setup.data build
+	$(SETUP) -doc $(DOCFLAGS)
 
-CAMLC = ocamlc
-CAMLDOC = ocamldoc
-CAMLFLAGS = -g
+test: setup.data build
+	$(SETUP) -test $(TESTFLAGS)
 
-%.cmo: %.ml
-	$(CAMLC) $(CAMLFLAGS) -c $<
+all: 
+	$(SETUP) -all $(ALLFLAGS)
 
-# Source and Object files
-SOURCES = \
-	Order.ml EltsI.ml Elts.ml \
-	Helpers.ml MatrixI.ml Matrix.ml \
-	SimplexI.ml Interface.ml Main.ml
-	
-OBJECTS = $(SOURCES:.ml=.cmo)
+install: setup.data
+	$(SETUP) -install $(INSTALLFLAGS)
 
-# Final Program
+uninstall: setup.data
+	$(SETUP) -uninstall $(UNINSTALLFLAGS)
 
-$(PROG): $(OBJECTS)
-	$(CAMLC) $(CAMLFLAGS) $(LIBS) $(OBJECTS) -o $(PROG)
+reinstall: setup.data
+	$(SETUP) -reinstall $(REINSTALLFLAGS)
 
-# DocGen
+clean: 
+	$(SETUP) -clean $(CLEANFLAGS)
 
-doc: $(OBJECTS)
-	$(CAMLDOC) -html $(SOURCES)
+distclean: 
+	$(SETUP) -distclean $(DISTCLEANFLAGS)
 
-# Other
+setup.data:
+	$(SETUP) -configure $(CONFIGUREFLAGS)
 
-all: $(PROG)
+.PHONY: build doc test all install uninstall reinstall clean distclean configure
 
-clean:
-	rm -rf *.cmo *.cmi *.html *.css $(PROG)
-
-.DEFAULT_GOAL := $(PROG)
-.PHONY: doc build run clean
+# OASIS_STOP
