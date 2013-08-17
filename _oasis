@@ -1,0 +1,23 @@
+OASISFormat: 0.3
+Name:        Ocaml Matrix
+Version:     1
+Synopsis:    Complete matrix library for Ocaml, with the ability to execute
+  the simplex algorithm
+Authors:     kandluis (https://github.com/kandluis)
+License:     GPL-3
+Plugins:     META (0.3), StdFiles (0.3), DevFiles (0.3)
+
+Library "ocaml-matrix"
+  Path:       src
+  BuildTools: ocamlbuild
+  Modules:    Order, EltsI, Elts, Helpers, MatrixI, Matrix, SimplexI,
+  Interface, Main
+
+Document "ocaml-matrix"
+  Title:                "Ocaml Matrix docs"
+  Type:                 ocamlbuild (0.3)
+  BuildTools: ocamlbuild
+  BuildTools+:          ocamldoc
+  Install:		true
+  XOCamlbuildPath:      src
+  XOCamlbuildLibraries: ocaml-matrix

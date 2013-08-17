@@ -1,0 +1,5 @@
+(* OASIS_START *)
+(* DO NOT EDIT (digest: e0fca4650cb18c2fd2ffe83943d5d949) *)
+Authors of Ocaml Matrix
+kandluis (https://github.com/kandluis)
+(* OASIS_STOP *)

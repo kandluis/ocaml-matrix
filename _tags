@@ -1,0 +1,18 @@
+# OASIS_START
+# DO NOT EDIT (digest: 0ccea19f2477e82703b0254c1f40901a)
+# Ignore VCS directories, you can use the same kind of rule outside 
+# OASIS_START/STOP if you want to exclude directories that contains 
+# useless stuff for the build process
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library ocaml-matrix
+"src/ocaml-matrix.cmxs": use_ocaml-matrix
+# OASIS_STOP

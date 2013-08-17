@@ -1,0 +1,12 @@
+# OASIS_START
+# DO NOT EDIT (digest: 3751c0db0af64951043da8d1fb5616a7)
+version = "1"
+description =
+"Complete matrix library for Ocaml, with the ability to execute the simplex algorithm"
+archive(byte) = "ocaml-matrix.cma"
+archive(byte, plugin) = "ocaml-matrix.cma"
+archive(native) = "ocaml-matrix.cmxa"
+archive(native, plugin) = "ocaml-matrix.cmxs"
+exists_if = "ocaml-matrix.cma"
+# OASIS_STOP
+
