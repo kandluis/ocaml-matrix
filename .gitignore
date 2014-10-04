@@ -34,6 +34,7 @@ tramp
 *.tar
 
 # program
+maketop
 simplex
 matrixtop
 simplextop
